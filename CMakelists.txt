@@ -10,18 +10,23 @@ set(CMAKE_CXX_STANDARD 17)
 set(PRODUCTION_BUILD OFF CACHE BOOl "Make this a production build" FORCE)
 
 if(MSVC)
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:Release>")
-add_compile_options(/arch:AVX2) # make sure SIMD optimizations take place
+	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:Release>")
+	add_compile_options(/arch:AVX2) # make sure SIMD optimizations take place
 else()
-
 	add_link_options(-static-libstdc++ -static-libgcc)
-
-	add_compile_options(-mavx2 -mfma) # make sure SIMD optimizations take place, but on linux
-
+	#add_compile_options(-mavx2 -mfma) # make sure SIMD optimizations take place, but on linux
 endif()
 
+# ensure raylib is built as a static library
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build raylib as static library" FORCE)
+
 project(terraClone)
+
+# add libraries
+add_subdirectory("thirdParty/raylib-5.0")
+add_subdirectory("thirdParty/imgui-docking")
+add_subdirectory("thirdParty/rlimgui")
 
 # MY_SOURCES is a list of all source files for the game
 # This macro will be used to attach the sources to the executable
@@ -71,3 +76,4 @@ elseif(APPLE OR LINUX) # macOS/Linux
 endif()
 
 target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/")
+target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE raylib_static imgui rlimgui)
