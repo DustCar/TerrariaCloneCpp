@@ -1,0 +1,14 @@
+# build folders
+/out
+bin/
+build/
+
+# IDE / CMake
+/.vs
+.idea/
+CMakeSettings.json
+Makefile
+
+# Game specifics
+settings/
+saves/
