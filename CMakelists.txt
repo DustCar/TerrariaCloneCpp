@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 17)
 # set this to ON when shipping the game!
 # this changes the RESOURCES_PATH to be relative rather than absolute and ignores any extra debug code
 #!!!!!!!
-set(PRODUCTION_BUILD OFF CACHE BOOl "Make this a production build" FORCE)
+set(PRODUCTION_BUILD OFF CACHE BOOL "Make this a production build" FORCE)
 
 if(MSVC)
 	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
