@@ -5,6 +5,7 @@ struct AssetManager
 {
 
 	Texture2D dirt = {};
+	Texture2D castle = {};
 
 	void loadAll();
 };
