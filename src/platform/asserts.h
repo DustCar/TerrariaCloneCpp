@@ -13,7 +13,7 @@ void assertFuncInternal(
 	unsigned const line_number,
 	const char *comment = "---");
 
-#if DEVELOPLEMT_BUILD == 1
+#if PRODUCTION_BUILD == 0
 
 #define permaAssert(expression) (void)(											\
 					(!!(expression)) ||												\
@@ -39,11 +39,11 @@ void assertFuncInternal(
 
 #endif
 
-#if DEVELOPLEMT_BUILD == 1
-#define permaAssertDevelopement permaAssert
-#define permaAssertCommentDevelopement permaAssertComment
+#if PRODUCTION_BUILD == 0
+#define permaAssertDevelopment permaAssert
+#define permaAssertCommentDevelopment permaAssertComment
 
 #else
-#define permaAssertDevelopement
-#define permaAssertCommentDevelopement
+#define permaAssertDevelopment
+#define permaAssertCommentDevelopment
 #endif

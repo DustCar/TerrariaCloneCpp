@@ -43,7 +43,6 @@ int main()
 	{
 
 		BeginDrawing();
-		ClearBackground(BLACK);
 
 	#pragma region imgui setup
 		rlImGuiBegin();
