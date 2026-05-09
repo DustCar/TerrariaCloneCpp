@@ -59,6 +59,8 @@ struct Block
 		boneWordrobe,
 		boneBookShelf,
 		bonePlatform,
+		emerald,
+		emeraldBlock,
 
 		BLOCKS_COUNT,
 

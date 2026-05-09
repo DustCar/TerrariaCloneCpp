@@ -35,7 +35,7 @@ bool initGame()
 			}
 			else
 			{
-				gameData.gameMap.getBlockUnsafe(x, y).type = Block::rubyBlock;
+				gameData.gameMap.getBlockUnsafe(x, y).type = Block::emerald;
 			}
 
 		}
