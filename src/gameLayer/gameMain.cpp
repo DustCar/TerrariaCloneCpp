@@ -6,6 +6,7 @@
 #include <gameMap.h>
 #include <helpers.h>
 #include <imgui.h>
+#include <raymath.h>
 
 
 // sure this is a global struct, but it's only global in this cpp file
@@ -24,23 +25,33 @@ bool initGame()
 {
 	assetManager.loadAll();
 
-	gameData.gameMap.create(30, 30);
+	gameData.gameMap.create(100, 30);
 
 	for (int y = 0; y < gameData.gameMap.h; y++)
 		for (int x = 0; x < gameData.gameMap.w; x++)
 		{
-			float sinWave = std::sin(x) / 2.0f;
-			float sinWave2 = std::sin(x * 0.5) / 2.0f;
+			float sinWave = std::sin(0.25f * x) / 6.0f;
+			float sinWave2 = std::sin(0.3f * x - 1.0f) / 2.0f;
 
-			if (gameData.gameMap.h - (gameData.gameMap.h * sinWave * 0.3f) - gameData.gameMap.h * 0.5 - (gameData.gameMap.h * sinWave2 * 0.2f) < y)
+			float surface = gameData.gameMap.h - (gameData.gameMap.h * sinWave * 0.1f) - gameData.gameMap.h * 0.5 - (gameData.gameMap.h * sinWave2 * 0.1f);
+			
+			if (y == (int)surface)
+			{
+				gameData.gameMap.getBlockUnsafe(x, y).type = Block::grassBlock;
+			}
+			else if (y > surface)
 			{
 				gameData.gameMap.getBlockUnsafe(x, y).type = Block::dirt;
 			}
 			else
 			{
-				gameData.gameMap.getBlockUnsafe(x, y).type = Block::emerald;
+				gameData.gameMap.getBlockUnsafe(x, y).type = Block::air;
 			}
 
+			if (y == (int)surface - 1 && (x % 5 == 0 || x % 5 == 1))
+			{
+				gameData.gameMap.getBlockSafe(x, y)->type = Block::grass;
+			}
 		}
 
 	gameData.camera.target = { 15,15 }; // world-space center of view; will be used as camera position
@@ -67,6 +78,7 @@ bool updateGame()
 	if (IsKeyDown(KEY_S)) { gameData.camera.target.y += 10.f * deltaTime; }
 #pragma endregion
 
+#pragma region mouse controls
 	Vector2 worldPos = GetScreenToWorld2D(GetMousePosition(), gameData.camera);
 	int blockX = (int)floor(worldPos.x);
 	int blockY = (int)floor(worldPos.y);
@@ -99,15 +111,33 @@ bool updateGame()
 				b->type = gameData.selectedBlock;
 			}
 		}
-		
 	}
+#pragma endregion
 
+#pragma region draw world
 	BeginMode2D(gameData.camera);
+
+	// only draw blocks within the screen dimensions
+	Vector2 topLeftView = GetScreenToWorld2D({ 0, 0 }, gameData.camera);
+	Vector2 bottomRightView = GetScreenToWorld2D({ (float)GetScreenWidth(), (float)GetScreenHeight() }, gameData.camera);
+
+	// padding
+	int startXView = (int)floorf(topLeftView.x - 1.0f);
+	int endXView = (int)ceilf(bottomRightView.x + 1.0f);
+	int startYView = (int)floorf(topLeftView.y - 1.0f);
+	int endYView = (int)ceilf(bottomRightView.y + 1.0f);
+
+
+	startXView = Clamp(startXView, 0, gameData.gameMap.w - 1);
+	endXView = Clamp(endXView, 0, gameData.gameMap.w - 1);
+
+	startYView = Clamp(startYView, 0, gameData.gameMap.h - 1);
+	endYView = Clamp(endYView, 0, gameData.gameMap.h - 1);
 
 	// y outer, x inner for right-down iteration like old tvs
 	// draw blocks into world
-	for (int y = 0; y < gameData.gameMap.h; y++)
-		for (int x = 0; x < gameData.gameMap.w; x++)
+	for (int y = startYView; y <= endYView; y++)
+		for (int x = startXView; x <= endXView; x++)
 		{
 			// no need for checks, drawing whole map
 			auto& b = gameData.gameMap.getBlockUnsafe(x, y);
@@ -137,6 +167,7 @@ bool updateGame()
 	);
 
 	EndMode2D();
+#pragma endregion
 
 #pragma region ui
 
@@ -171,6 +202,8 @@ bool updateGame()
 	ImGui::End();
 
 #pragma endregion
+
+	DrawFPS(10, 10);
 
 	return true;
 }

@@ -27,7 +27,7 @@ Block* GameMap::getBlockSafe(int x, int y)
 {
 	permaAssertCommentDevelopment(mapData.size() == w * h, "Map data not initialized");
 
-	if (x < 0 || y < 0 || x >= w || y >= w) { return nullptr; }
+	if (x < 0 || y < 0 || x >= w || y >= h) { return nullptr; }
 
 	return &mapData[y * w + x];
 }
