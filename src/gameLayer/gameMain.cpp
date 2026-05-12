@@ -13,7 +13,7 @@
 struct GameData
 {
 	GameMap gameMap;
-	Camera2D camera;
+	Camera2D camera = Camera2D{};
 
 	int selectedBlock = Block::dirt;
 
@@ -71,14 +71,15 @@ bool updateGame()
 
 	ClearBackground({ 75, 75, 150, 255 });
 	
-#pragma region camera movement
+/* camera movement begin */
 	if (IsKeyDown(KEY_A)) { gameData.camera.target.x -= 10.f * deltaTime; }
 	if (IsKeyDown(KEY_D)) { gameData.camera.target.x += 10.f * deltaTime; }
 	if (IsKeyDown(KEY_W)) { gameData.camera.target.y -= 10.f * deltaTime; }
 	if (IsKeyDown(KEY_S)) { gameData.camera.target.y += 10.f * deltaTime; }
-#pragma endregion
+/* camera movement end */
 
-#pragma region mouse controls
+
+/* mouse controls begin */
 	Vector2 worldPos = GetScreenToWorld2D(GetMousePosition(), gameData.camera);
 	int blockX = (int)floor(worldPos.x);
 	int blockY = (int)floor(worldPos.y);
@@ -109,12 +110,14 @@ bool updateGame()
 			if (b && b->type == Block::air)
 			{
 				b->type = gameData.selectedBlock;
+				b->variant = random(0, 3);
 			}
 		}
 	}
-#pragma endregion
+/* mouse controls end */
 
-#pragma region draw world
+
+/* draw world begin */
 	BeginMode2D(gameData.camera);
 
 	// only draw blocks within the screen dimensions
@@ -139,21 +142,79 @@ bool updateGame()
 	for (int y = startYView; y <= endYView; y++)
 		for (int x = startXView; x <= endXView; x++)
 		{
-			// no need for checks, drawing whole map
+			// no need for checks, x and y are already clamped in bounds
 			auto& b = gameData.gameMap.getBlockUnsafe(x, y);
 
 			if (b.type != Block::air)
 			{
+				// draw wood log situationally
+				if (b.type == Block::woodLog)
+				{
+					auto bUp = gameData.gameMap.getBlockSafe(x, y - 1);
+					auto bDown = gameData.gameMap.getBlockSafe(x, y + 1);
+					auto bRight = gameData.gameMap.getBlockSafe(x + 1, y);
+					auto bLeft = gameData.gameMap.getBlockSafe(x - 1, y);
 
-				DrawTexturePro(
-					assetManager.textures, // texture
-					getTextureAtlas(b.type, 0, 32, 32), // source
-					{ (float)x, (float)y, 1, 1 }, // dest
-					{ 0,0 }, // origin of texture (rotation/scale point) (top-left corner)
-					0.f, // rotation
-					WHITE // tint
-				);
+					int treeType = 0;
+					if (bDown->type == Block::woodLog)
+					{
+						treeType = 0;
+						if (bUp->type == Block::leaves)
+						{
+							treeType = 5;
+						}
+						else if (bRight->type == Block::leaves && bLeft->type == Block::leaves)
+						{
+							treeType = 1;
+						}
+						else if (bRight->type == Block::leaves)
+						{
+							treeType = 2;
+						}
+						else if (bLeft->type == Block::leaves)
+						{
+							treeType = 3;
+						}
+						else if (bUp->type == Block::air)
+						{
+							treeType = 6;
+						}
+					}
+					else
+					{
+						if (bUp->type == Block::air)
+						{
+							treeType = 7;
+						}
+						else
+						{
+							treeType = 4;
+						}
+					}
+
+					DrawTexturePro(
+						assetManager.tree, // texture
+						getTextureAtlas(treeType, b.variant, 32, 32), // source
+						{ (float)x, (float)y, 1, 1 }, // dest
+						{ 0, 0 }, // origin
+						0.f, // rotation
+						WHITE // tint
+					);
+				}
+				// draw everythin else
+				else
+				{
+					DrawTexturePro(
+						assetManager.textures, // texture
+						getTextureAtlas(b.type, 0, 32, 32), // source
+						{ (float)x, (float)y, 1, 1 }, // dest
+						{ 0, 0 }, // origin of texture (rotation/scale point) (top-left corner)
+						0.f, // rotation
+						WHITE // tint
+					);
+				}
 			}
+		
 		}
 
 	// draw frame for block placement
@@ -167,10 +228,10 @@ bool updateGame()
 	);
 
 	EndMode2D();
-#pragma endregion
+/* draw world end */
 
-#pragma region ui
 
+/* simple imgui begin */
 	ImGui::Begin("Block Selector");
 
 	for (int i = 1; i < Block::BLOCKS_COUNT; i++)
@@ -200,8 +261,7 @@ bool updateGame()
 	}
 
 	ImGui::End();
-
-#pragma endregion
+/* simple imgui end */
 
 	DrawFPS(10, 10);
 

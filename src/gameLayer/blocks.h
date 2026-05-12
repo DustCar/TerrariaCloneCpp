@@ -68,6 +68,8 @@ struct Block
 
 	// block type. at most 65535 block types.
 	std::uint16_t type = 0;
-
+	
+	// style of the block (row in texture atlas)
+	std::uint8_t variant = 0;
 
 };

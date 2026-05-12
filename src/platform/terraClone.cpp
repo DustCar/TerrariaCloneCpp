@@ -23,7 +23,7 @@ int main()
 	SetExitKey(KEY_NULL);	// Disable ESC from closing window
 	SetTargetFPS(240);
 
-#pragma region imgui setup
+/* imgui setup begin */
 	rlImGuiSetup(true);
 
 	// set imgui flags
@@ -31,8 +31,7 @@ int main()
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;	// Enable Keyboard controls
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;	// Enable Gamepad controls
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-	//io.FontGlobalScale = 1;
-#pragma endregion
+/* imgui setup end */
 
 	if (!initGame())
 	{
@@ -44,7 +43,7 @@ int main()
 
 		BeginDrawing();
 
-	#pragma region imgui setup
+	/* imgui setup begin */
 		rlImGuiBegin();
 
 		// removes gray box that covers the game screen
@@ -53,16 +52,15 @@ int main()
 		// allows docking widgets to main window
 		ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
 		ImGui::PopStyleColor(2);
-	#pragma endregion
+	/* imgui setup end */
+
 
 		if (!updateGame())
 		{
 			CloseWindow();
 		}
 
-	#pragma region imgui
 		rlImGuiEnd();
-	#pragma endregion
 
 		EndDrawing();
 	}
@@ -71,9 +69,7 @@ int main()
 
 	closeGame();
 
-#pragma region imgui
 	rlImGuiShutdown();
-#pragma endregion
 
 
 	return 0;
