@@ -2,7 +2,7 @@
 
 void AssetManager::loadAll()
 {
-	textures = LoadTexture(RESOURCES_PATH "textures.png");
+	textures = LoadTexture(RESOURCES_PATH "texturesWithBackgroundVersion.png");
 	frame = LoadTexture(RESOURCES_PATH "frame.png");
 	tree = LoadTexture(RESOURCES_PATH "treetextures.png");
 }

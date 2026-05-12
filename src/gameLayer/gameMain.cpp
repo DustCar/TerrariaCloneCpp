@@ -52,6 +52,12 @@ bool initGame()
 			{
 				gameData.gameMap.getBlockSafe(x, y)->type = Block::grass;
 			}
+
+			gameData.gameMap.getBlockUnsafe(x, y).variant = random(0, 3);
+
+
+			// wall
+			gameData.gameMap.getWallUnsafe(x, y).type = Block::air;
 		}
 
 	gameData.camera.target = { 15,15 }; // world-space center of view; will be used as camera position
@@ -84,33 +90,72 @@ bool updateGame()
 	int blockX = (int)floor(worldPos.x);
 	int blockY = (int)floor(worldPos.y);
 
+	// bool to avoid destroying walls behind blocks immediately
+	static bool bDestroyingBlocks = false;
+
 	// break block
 	if (IsMouseButtonDown(MOUSE_LEFT_BUTTON) && !IsMouseButtonDown(MOUSE_RIGHT_BUTTON))
 	{
 		auto b = gameData.gameMap.getBlockSafe(blockX, blockY);
-		if (b)
+
+		if (b && b->type != Block::air)
 		{
 			*b = {};
+			bDestroyingBlocks = true;
 		}
+		else
+		{
+			auto w = gameData.gameMap.getWallSafe(blockX, blockY);
+			if (w && !bDestroyingBlocks)
+			{
+				*w = {};
+			}
+		}
+		
+	}
+
+	// reset destroying blocks bool
+	if (!IsMouseButtonDown(MOUSE_LEFT_BUTTON) && bDestroyingBlocks)
+	{
+		bDestroyingBlocks = false;
 	}
 
 	// place block
 	if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON) && !IsMouseButtonDown(MOUSE_LEFT_BUTTON))
 	{
-		auto b = gameData.gameMap.getBlockSafe(blockX, blockY);
-		// check adjacent blocks
-		auto bUp = gameData.gameMap.getBlockSafe(blockX, blockY - 1);
-		auto bDown = gameData.gameMap.getBlockSafe(blockX, blockY + 1);
-		auto bRight = gameData.gameMap.getBlockSafe(blockX + 1, blockY);
-		auto bLeft = gameData.gameMap.getBlockSafe(blockX - 1, blockY);
-
-		// only place if the block can attach to another block and if space is empty
-		if ((bUp && bUp->type != Block::air) || (bDown && bDown->type != Block::air) || (bRight && bRight->type != Block::air) || (bLeft && bLeft->type != Block::air))
+		// placement of standard blocks
+		if (gameData.selectedBlock <= Block::emeraldBlock)
 		{
-			if (b && b->type == Block::air)
+			auto b = gameData.gameMap.getBlockSafe(blockX, blockY);
+			// check adjacent blocks
+			auto bUp = gameData.gameMap.getBlockSafe(blockX, blockY - 1);
+			auto bDown = gameData.gameMap.getBlockSafe(blockX, blockY + 1);
+			auto bRight = gameData.gameMap.getBlockSafe(blockX + 1, blockY);
+			auto bLeft = gameData.gameMap.getBlockSafe(blockX - 1, blockY);
+
+			// only place if the block can attach to another block and if space is empty
+			if ((bUp && bUp->type != Block::air) || (bDown && bDown->type != Block::air) || (bRight && bRight->type != Block::air) || (bLeft && bLeft->type != Block::air))
 			{
-				b->type = gameData.selectedBlock;
-				b->variant = random(0, 3);
+				if (b && b->type == Block::air)
+				{
+					b->type = gameData.selectedBlock;
+					b->variant = random(0, 3);
+				}
+			}
+		}
+		// placement of wall blocks
+		else
+		{
+			// check to see if a block has not been placed
+			auto block = gameData.gameMap.getBlockSafe(blockX, blockY);
+			if (block->type == Block::air)
+			{
+				auto w = gameData.gameMap.getWallSafe(blockX, blockY);
+				if (w && w->type == Block::air)
+				{
+					w->type = gameData.selectedBlock;
+					w->variant = random(0, 3);
+				}
 			}
 		}
 	}
@@ -142,7 +187,23 @@ bool updateGame()
 	for (int y = startYView; y <= endYView; y++)
 		for (int x = startXView; x <= endXView; x++)
 		{
-			// no need for checks, x and y are already clamped in bounds
+			
+			// walls; drawn first so blocks go in front
+			auto& w = gameData.gameMap.getWallUnsafe(x, y);
+
+			if (w.type != Block::air)
+			{
+				DrawTexturePro(
+					assetManager.textures, // texture
+					getTextureAtlas(w.type, w.variant, 32, 32), // source
+					{ (float)x, (float)y, 1, 1 }, // dest
+					{ 0, 0 }, // origin of texture (rotation/scale point) (top-left corner)
+					0.f, // rotation
+					WHITE // tint
+				);
+			}
+
+			// blocks
 			auto& b = gameData.gameMap.getBlockUnsafe(x, y);
 
 			if (b.type != Block::air)
@@ -156,7 +217,7 @@ bool updateGame()
 					auto bLeft = gameData.gameMap.getBlockSafe(x - 1, y);
 
 					int treeType = 0;
-					if (bDown->type == Block::woodLog)
+					if (bDown->type == Block::woodLog || bDown->type == Block::leaves)
 					{
 						treeType = 0;
 						if (bUp->type == Block::leaves)
@@ -201,12 +262,12 @@ bool updateGame()
 						WHITE // tint
 					);
 				}
-				// draw everythin else
+				// draw everything else
 				else
 				{
 					DrawTexturePro(
 						assetManager.textures, // texture
-						getTextureAtlas(b.type, 0, 32, 32), // source
+						getTextureAtlas(b.type, b.variant, 32, 32), // source
 						{ (float)x, (float)y, 1, 1 }, // dest
 						{ 0, 0 }, // origin of texture (rotation/scale point) (top-left corner)
 						0.f, // rotation

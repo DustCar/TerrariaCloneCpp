@@ -5,6 +5,7 @@ struct Block
 {
 	enum
 	{
+		// standard blocks
 		air = 0,
 		dirt,
 		grassBlock,
@@ -61,6 +62,27 @@ struct Block
 		bonePlatform,
 		emerald,
 		emeraldBlock,
+
+		// wall blocks
+		dirtWall,
+		stoneWall,
+		woodWall,
+		sandStoneWall,
+		brickWall,
+		glassWall,
+		copperBlockWall,
+		silverBlockWall,
+		goldBlockWall,
+		snowWall,
+		sandWall,
+		stoneBrickWall,
+		rubyBlockWall,
+		hieroglyphWall,
+		blueRubyBlockWall,
+		plankedWall,
+		snowBrickWall,
+		boneBrickWall,
+		emeraldBlockWall,
 
 		BLOCKS_COUNT,
 
