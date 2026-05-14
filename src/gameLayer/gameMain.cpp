@@ -53,7 +53,7 @@ bool initGame()
 				gameData.gameMap.getBlockSafe(x, y)->type = Block::grass;
 			}
 
-			gameData.gameMap.getBlockUnsafe(x, y).variant = random(0, 3);
+			//gameData.gameMap.getBlockUnsafe(x, y).variant = random(0, 3);
 
 
 			// wall
@@ -265,6 +265,10 @@ bool updateGame()
 				// draw everything else
 				else
 				{
+					// possible PRNG alternative to current random() algo used for b.variant
+					/*int szudzikValue = x >= y ? (x * x) + x + y : (y * y) + x;
+					int rand = randomWithSeed(szudzikValue, 0, 3);*/
+
 					DrawTexturePro(
 						assetManager.textures, // texture
 						getTextureAtlas(b.type, b.variant, 32, 32), // source
