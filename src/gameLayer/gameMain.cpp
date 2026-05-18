@@ -7,7 +7,14 @@
 #include <helpers.h>
 #include <imgui.h>
 #include <raymath.h>
+#include <randomHelpers.h>
 
+// TEMP ITEM CHANCE TEST
+struct ChanceBlock
+{
+	int type = 0;
+	float chance = 0;
+};
 
 // sure this is a global struct, but it's only global in this cpp file
 struct GameData
@@ -16,6 +23,14 @@ struct GameData
 	Camera2D camera = Camera2D{};
 
 	int selectedBlock = Block::dirt;
+
+	// TEMP ITEM CHANCE TEST
+	std::vector<ChanceBlock> blockChance{};
+	std::vector<float> cumulative{};
+	// TEMP END
+
+	std::ranlux24_base rng;
+
 
 }gameData;
 
@@ -26,6 +41,26 @@ bool initGame()
 	assetManager.loadAll();
 
 	gameData.gameMap.create(100, 30);
+
+	// store the random number generator
+	gameData.rng = std::ranlux24_base(std::random_device{}());
+
+	// TEMP ITEM CHANCE TEST
+	gameData.blockChance = {
+		{ Block::copper, 0.5 },
+		{ Block::iron, 0.4 },
+		{ Block::gold, 0.1 },
+	};
+
+	gameData.cumulative.resize(gameData.blockChance.size(), 0);
+
+	float total = 0.f;
+	for (int i = 0; i < gameData.blockChance.size(); i++)
+	{
+		total += gameData.blockChance[i].chance;
+		gameData.cumulative[i] = total;
+	}
+	// TEMP END
 
 	for (int y = 0; y < gameData.gameMap.h; y++)
 		for (int x = 0; x < gameData.gameMap.w; x++)
@@ -53,8 +88,7 @@ bool initGame()
 				gameData.gameMap.getBlockSafe(x, y)->type = Block::grass;
 			}
 
-			//gameData.gameMap.getBlockUnsafe(x, y).variant = random(0, 3);
-
+			gameData.gameMap.getBlockUnsafe(x, y).variant = getRandomInt(gameData.rng, 0, 3);
 
 			// wall
 			gameData.gameMap.getWallUnsafe(x, y).type = Block::air;
@@ -139,7 +173,7 @@ bool updateGame()
 				if (b && b->type == Block::air)
 				{
 					b->type = gameData.selectedBlock;
-					b->variant = random(0, 3);
+					b->variant = getRandomInt(gameData.rng, 0, 3);
 				}
 			}
 		}
@@ -154,7 +188,7 @@ bool updateGame()
 				if (w && w->type == Block::air)
 				{
 					w->type = gameData.selectedBlock;
-					w->variant = random(0, 3);
+					w->variant = getRandomInt(gameData.rng, 0, 3);
 				}
 			}
 		}
@@ -297,33 +331,76 @@ bool updateGame()
 
 
 /* simple imgui begin */
-	ImGui::Begin("Block Selector");
+	ImGui::Begin("Game Editor");
 
-	for (int i = 1; i < Block::BLOCKS_COUNT; i++)
+	ImGui::BeginTabBar("Tabs");
+	if (ImGui::BeginTabItem("Block Selector"))
 	{
-		auto atlas = getTextureAtlas(i, 0, 32, 32);
-		// transform texture parameters into UV coords
-		atlas.x /= assetManager.textures.width;
-		atlas.width /= assetManager.textures.width;
-		atlas.y /= assetManager.textures.height;
-		atlas.height /= assetManager.textures.height;
-
-		ImGui::PushID(i);
-
-		ImTextureID tex = (ImTextureID)(intptr_t)assetManager.textures.id;
-		if (ImGui::ImageButton("", tex, { 28, 28 },
-			{ atlas.x, atlas.y }, { atlas.x + atlas.width, atlas.y + atlas.height }))
+		for (int i = 1; i < Block::BLOCKS_COUNT; i++)
 		{
-			gameData.selectedBlock = i;
-		}
+			auto atlas = getTextureAtlas(i, 0, 32, 32);
+			// transform texture parameters into UV coords
+			atlas.x /= assetManager.textures.width;
+			atlas.width /= assetManager.textures.width;
+			atlas.y /= assetManager.textures.height;
+			atlas.height /= assetManager.textures.height;
 
-		ImGui::PopID();
+			ImGui::PushID(i);
 
-		if (i % 10 != 0)
-		{
-			ImGui::SameLine();
+			ImTextureID tex = (ImTextureID)(intptr_t)assetManager.textures.id;
+			if (ImGui::ImageButton("", tex, { 28, 28 },
+				{ atlas.x, atlas.y }, { atlas.x + atlas.width, atlas.y + atlas.height }))
+			{
+				gameData.selectedBlock = i;
+			}
+
+			ImGui::PopID();
+
+			if (i % 10 != 0)
+			{
+				ImGui::SameLine();
+			}
 		}
+		ImGui::EndTabItem();
 	}
+
+	// TEMP ITEM CHANCE TEST
+	static int copperBlocks = 0, ironBlocks = 0, goldBlocks = 0, tests = 0, newTests = 0;
+	if (ImGui::BeginTabItem("Misc"))
+	{
+		ImGui::Text("Copper blocks: %d %d/%d %2.2f%%", copperBlocks, copperBlocks, tests, tests != 0 ? copperBlocks/(float)tests * 100 : 0.f);
+		ImGui::Text("Iron blocks: %d %d/%d %2.2f%%", ironBlocks, ironBlocks, tests, tests != 0 ? ironBlocks / (float)tests * 100 : 0.f);
+		ImGui::Text("Gold blocks: %d %d/%d %2.2f%%", goldBlocks, goldBlocks, tests, tests != 0 ? goldBlocks / (float)tests * 100 : 0.f);
+		ImGui::InputInt("Tests", &newTests, 0, 0);
+		if (ImGui::Button("Generate"))
+		{
+			copperBlocks = 0, ironBlocks = 0, goldBlocks = 0;
+			tests = newTests;
+			for (int i = 0; i < tests; i++)
+			{
+				float roll = getRandomFloat(gameData.rng, 0.f, 1.f);
+				auto it = std::lower_bound(gameData.cumulative.begin(), gameData.cumulative.end(), roll);
+				int block = gameData.blockChance[std::distance(gameData.cumulative.begin(), it)].type;
+				switch (block)
+				{
+				case Block::copper:
+					copperBlocks++;
+					break;
+				case Block::iron:
+					ironBlocks++;
+					break;
+				case Block::gold:
+					goldBlocks++;
+					break;
+				}
+			}
+		}
+		ImGui::EndTabItem();
+	}
+	// TEMP END
+	
+	ImGui::EndTabBar();
+
 
 	ImGui::End();
 /* simple imgui end */
