@@ -10,6 +10,8 @@
 #include <randomHelpers.h>
 #include <worldGenerator.h>
 
+void ProcessMouseInput(int blockX, int blockY);
+void DrawImGui(float& cameraZoom, float& cameraSpeed);
 
 // sure this is a global struct, but it's only global in this cpp file
 struct GameData
@@ -21,15 +23,14 @@ struct GameData
 
 	std::ranlux24_base rng;
 
-
 }gameData;
 
 AssetManager assetManager;
 
-bool initGame()
+bool InitGame()
 {
-	assetManager.loadAll();
 
+	assetManager.loadAll();
 	generateWorld(gameData.gameMap);
 
 	// store the random number generator
@@ -42,8 +43,10 @@ bool initGame()
 	return true;
 }
 
-bool updateGame()
+bool UpdateGame()
 {
+	ImGuiIO& io = ImGui::GetIO();
+
 	float deltaTime = GetFrameTime();
 	// cap deltaTime at 5 frames per second
 	if (deltaTime > 1.f / 5.f) { deltaTime = 1.f / 5.f; }
@@ -53,10 +56,11 @@ bool updateGame()
 	ClearBackground({ 75, 75, 150, 255 });
 	
 /* camera movement begin */
-	if (IsKeyDown(KEY_A)) { gameData.camera.target.x -= 10.f * deltaTime; }
-	if (IsKeyDown(KEY_D)) { gameData.camera.target.x += 10.f * deltaTime; }
-	if (IsKeyDown(KEY_W)) { gameData.camera.target.y -= 10.f * deltaTime; }
-	if (IsKeyDown(KEY_S)) { gameData.camera.target.y += 10.f * deltaTime; }
+	static float CAMERA_SPEED = 10.f;
+	if (IsKeyDown(KEY_A)) { gameData.camera.target.x -= CAMERA_SPEED * deltaTime; }
+	if (IsKeyDown(KEY_D)) { gameData.camera.target.x += CAMERA_SPEED * deltaTime; }
+	if (IsKeyDown(KEY_W)) { gameData.camera.target.y -= CAMERA_SPEED * deltaTime; }
+	if (IsKeyDown(KEY_S)) { gameData.camera.target.y += CAMERA_SPEED * deltaTime; }
 /* camera movement end */
 
 
@@ -65,74 +69,9 @@ bool updateGame()
 	int blockX = (int)floor(worldPos.x);
 	int blockY = (int)floor(worldPos.y);
 
-	// bool to avoid destroying walls behind blocks immediately
-	static bool bDestroyingBlocks = false;
-
-	// break block
-	if (IsMouseButtonDown(MOUSE_LEFT_BUTTON) && !IsMouseButtonDown(MOUSE_RIGHT_BUTTON))
+	if (!io.WantCaptureMouse)
 	{
-		auto b = gameData.gameMap.getBlockSafe(blockX, blockY);
-
-		if (b && b->type != Block::air)
-		{
-			*b = {};
-			bDestroyingBlocks = true;
-		}
-		else
-		{
-			auto w = gameData.gameMap.getWallSafe(blockX, blockY);
-			if (w && !bDestroyingBlocks)
-			{
-				*w = {};
-			}
-		}
-		
-	}
-
-	// reset destroying blocks bool
-	if (!IsMouseButtonDown(MOUSE_LEFT_BUTTON) && bDestroyingBlocks)
-	{
-		bDestroyingBlocks = false;
-	}
-
-	// place block
-	if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON) && !IsMouseButtonDown(MOUSE_LEFT_BUTTON))
-	{
-		// placement of standard blocks
-		if (gameData.selectedBlock <= Block::emeraldBlock)
-		{
-			auto b = gameData.gameMap.getBlockSafe(blockX, blockY);
-			// check adjacent blocks
-			auto bUp = gameData.gameMap.getBlockSafe(blockX, blockY - 1);
-			auto bDown = gameData.gameMap.getBlockSafe(blockX, blockY + 1);
-			auto bRight = gameData.gameMap.getBlockSafe(blockX + 1, blockY);
-			auto bLeft = gameData.gameMap.getBlockSafe(blockX - 1, blockY);
-
-			// only place if the block can attach to another block and if space is empty
-			if ((bUp && bUp->type != Block::air) || (bDown && bDown->type != Block::air) || (bRight && bRight->type != Block::air) || (bLeft && bLeft->type != Block::air))
-			{
-				if (b && b->type == Block::air)
-				{
-					b->type = gameData.selectedBlock;
-					b->variant = getRandomInt(gameData.rng, 0, 3);
-				}
-			}
-		}
-		// placement of wall blocks
-		else
-		{
-			// check to see if a block has not been placed
-			auto block = gameData.gameMap.getBlockSafe(blockX, blockY);
-			if (block->type == Block::air)
-			{
-				auto w = gameData.gameMap.getWallSafe(blockX, blockY);
-				if (w && w->type == Block::air)
-				{
-					w->type = gameData.selectedBlock;
-					w->variant = getRandomInt(gameData.rng, 0, 3);
-				}
-			}
-		}
+		ProcessMouseInput(blockX, blockY);
 	}
 /* mouse controls end */
 
@@ -258,20 +197,113 @@ bool updateGame()
 		}
 
 	// draw frame for block placement
-	DrawTexturePro(
-		assetManager.frame, // texture
-		{ 0, 0, (float)assetManager.frame.width, (float)assetManager.frame.height }, // source
-		{ (float)blockX, (float)blockY, 1, 1 }, // dest
-		{ 0,0 }, // origin
-		0.f, // rotation
-		WHITE // tint
-	);
+	if (!io.WantCaptureMouse)
+	{
+		DrawTexturePro(
+			assetManager.frame, // texture
+			{ 0, 0, (float)assetManager.frame.width, (float)assetManager.frame.height }, // source
+			{ (float)blockX, (float)blockY, 1, 1 }, // dest
+			{ 0,0 }, // origin
+			0.f, // rotation
+			WHITE // tint
+		);
+	}
 
 	EndMode2D();
 /* draw world end */
 
 
 /* simple imgui begin */
+#if PRODUCTION_BUILD == 0
+	DrawImGui(gameData.camera.zoom, CAMERA_SPEED);
+#endif
+/* simple imgui end */
+
+	DrawFPS(10, 10);
+
+	return true;
+}
+
+void CloseGame()
+{
+
+}
+
+void ProcessMouseInput(int blockX, int blockY)
+{
+	// bool to avoid destroying walls behind blocks immediately
+	static bool bDestroyingBlocks = false;
+
+	// break block
+	if (IsMouseButtonDown(MOUSE_LEFT_BUTTON) && !IsMouseButtonDown(MOUSE_RIGHT_BUTTON))
+	{
+		auto b = gameData.gameMap.getBlockSafe(blockX, blockY);
+
+		if (b && b->type != Block::air)
+		{
+			*b = {};
+			bDestroyingBlocks = true;
+		}
+		else
+		{
+			auto w = gameData.gameMap.getWallSafe(blockX, blockY);
+			if (w && !bDestroyingBlocks)
+			{
+				*w = {};
+			}
+		}
+
+	}
+
+	// reset destroying blocks bool
+	if (!IsMouseButtonDown(MOUSE_LEFT_BUTTON) && bDestroyingBlocks)
+	{
+		bDestroyingBlocks = false;
+	}
+
+	// place block
+	if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON) && !IsMouseButtonDown(MOUSE_LEFT_BUTTON))
+	{
+		// placement of standard blocks
+		if (gameData.selectedBlock <= Block::emeraldBlock)
+		{
+			auto b = gameData.gameMap.getBlockSafe(blockX, blockY);
+			// check adjacent blocks
+			auto bUp = gameData.gameMap.getBlockSafe(blockX, blockY - 1);
+			auto bDown = gameData.gameMap.getBlockSafe(blockX, blockY + 1);
+			auto bRight = gameData.gameMap.getBlockSafe(blockX + 1, blockY);
+			auto bLeft = gameData.gameMap.getBlockSafe(blockX - 1, blockY);
+
+			// only place if the block can attach to another block and if space is empty
+			if ((bUp && bUp->type != Block::air) || (bDown && bDown->type != Block::air) || (bRight && bRight->type != Block::air) || (bLeft && bLeft->type != Block::air))
+			{
+				if (b && b->type == Block::air)
+				{
+					b->type = gameData.selectedBlock;
+					b->variant = getRandomInt(gameData.rng, 0, 3);
+				}
+			}
+		}
+		// placement of wall blocks
+		else
+		{
+			// check to see if a block has not been placed
+			auto block = gameData.gameMap.getBlockSafe(blockX, blockY);
+			if (block->type == Block::air)
+			{
+				auto w = gameData.gameMap.getWallSafe(blockX, blockY);
+				if (w && w->type == Block::air)
+				{
+					w->type = gameData.selectedBlock;
+					w->variant = getRandomInt(gameData.rng, 0, 3);
+				}
+			}
+		}
+	}
+}
+
+void DrawImGui(float& cameraZoom, float& cameraSpeed)
+{
 	ImGui::Begin("Game Editor");
 
 	ImGui::BeginTabBar("Tabs");
@@ -304,20 +336,18 @@ bool updateGame()
 		}
 		ImGui::EndTabItem();
 	}
-	
+
+	ImGuiSliderFlags flags = 0;
+	flags |= ImGuiSliderFlags_AlwaysClamp;
+	if (ImGui::BeginTabItem("Camera Settings"))
+	{
+		ImGui::SliderFloat("Camera Zoom:", &cameraZoom, 5.f, 150.f, "%.3f", flags);
+		ImGui::SliderFloat("Camera Speed:", &cameraSpeed, 10.f, 150.f, "%.3f", flags);
+
+		ImGui::EndTabItem();
+	}
+
 	ImGui::EndTabBar();
 
-
 	ImGui::End();
-/* simple imgui end */
-
-	DrawFPS(10, 10);
-
-	return true;
 }
-
-void closeGame()
-{
-
-}
-

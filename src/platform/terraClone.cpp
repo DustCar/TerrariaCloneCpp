@@ -31,16 +31,16 @@ int main()
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;	// Enable Keyboard controls
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;	// Enable Gamepad controls
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	SetupImGuiAmethystStyle();
 /* imgui setup end */
 
-	if (!initGame())
+	if (!InitGame())
 	{
 		return 0;
 	}
 
 	while (!WindowShouldClose())
 	{
-
 		BeginDrawing();
 
 	/* imgui setup begin */
@@ -50,12 +50,12 @@ int main()
 		ImGui::PushStyleColor(ImGuiCol_WindowBg, {});
 		ImGui::PushStyleColor(ImGuiCol_DockingEmptyBg, {});
 		// allows docking widgets to main window
-		ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
+		ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(),ImGuiDockNodeFlags_PassthruCentralNode);
 		ImGui::PopStyleColor(2);
 	/* imgui setup end */
 
-
-		if (!updateGame())
+		
+		if (!UpdateGame())
 		{
 			CloseWindow();
 		}
@@ -67,7 +67,7 @@ int main()
 
 	CloseWindow();
 
-	closeGame();
+	CloseGame();
 
 	rlImGuiShutdown();
 

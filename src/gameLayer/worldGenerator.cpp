@@ -34,11 +34,19 @@ void generateWorld(GameMap& gameMap, int seed)
 	int dirtLimit = 50;
 	int stoneLimit = 320;
 
+	// use lerp and random values to generate random mountains and values
+	/*
+		NOTE: changing dirt and stone limit is what affects the mountains
+		IDEA:
+		create an array of some values in the range -0.5, 0.5
+	*/
+
 	std::ranlux24_base rng(seed);
 
-	for (int y = 0; y < h; y++)
+	for (int x = 0; x < w; x++)
 	{
-		for (int x = 0; x < w; x++)
+
+		for (int y = 0; y < h; y++)
 		{
 			Block b;
 

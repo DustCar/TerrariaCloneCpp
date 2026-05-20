@@ -25,7 +25,7 @@ project(terraClone)
 
 # add libraries
 add_subdirectory("thirdParty/raylib-5.0")
-add_subdirectory("thirdParty/imgui-docking")
+add_subdirectory("thirdParty/imgui-docking-1.89.7")
 add_subdirectory("thirdParty/rlimgui")
 
 # MY_SOURCES is a list of all source files for the game
