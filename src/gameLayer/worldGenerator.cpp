@@ -1,5 +1,6 @@
 #include "worldGenerator.h"
 #include "randomHelpers.h"
+#include <iostream>
 
 struct BlockWithChance 
 {
@@ -10,7 +11,7 @@ struct BlockWithChance
 void generateWorld(GameMap& gameMap, int seed)
 {
 	int w = 900;
-	int h = 500;
+	int h = 350;
 
 	gameMap.create(w, h);
 
@@ -24,45 +25,50 @@ void generateWorld(GameMap& gameMap, int seed)
 
 	std::vector<float> oreBlockSum(oreBlockChances.size(), 0.f);
 
-	static float sum = 0;
+	float sum = 0;
 	for (int i = 0; i < oreBlockChances.size(); i++)
 	{
 		sum += oreBlockChances[i].chance;
 		oreBlockSum[i] = sum;
 	}
 
-	int dirtLimit = 50;
-	int stoneLimit = 320;
-
-	// use lerp and random values to generate random mountains and values
-	/*
-		NOTE: changing dirt and stone limit is what affects the mountains
-		IDEA:
-		create an array of some values in the range -0.5, 0.5
-	*/
+	int dirtLimit = 130;
+	int stoneLimit = 180;
 
 	std::ranlux24_base rng(seed);
 
+	int minDirt = 90, maxDirt = 159;
+	int minStone = 160, maxStone = 225;
+
+	int targetDirt = getRandomInt(rng, minDirt, maxDirt);
+	int targetStone = getRandomInt(rng, minStone, maxStone);
+
+	// blocks from targeted dirt/stone height to switch target up
+	int thresholdDirt = 33; 
+	int thresholdStone = 32;
+
 	for (int x = 0; x < w; x++)
 	{
+		dirtLimit += (int)((targetDirt - dirtLimit) * 0.04f);
+		stoneLimit += (int)((targetStone - stoneLimit) * 0.04f);
+
+		if (abs(targetDirt - dirtLimit) < thresholdDirt) { targetDirt = getRandomInt(rng, minDirt, maxDirt); }
+		if (abs(targetStone - stoneLimit) < thresholdStone) { targetStone = getRandomInt(rng, minStone, maxStone); }
 
 		for (int y = 0; y < h; y++)
 		{
 			Block b;
 
-			if (y < h - (dirtLimit + stoneLimit))
-			{
-				// air; gameMap.create defaults block types 
-			}
-			else if (y == h - (dirtLimit + stoneLimit))
-			{
-				b.type = Block::grassBlock;
-			}
-			else if (y < h - stoneLimit)
+			if (y > dirtLimit)
 			{
 				b.type = Block::dirt;
 			}
-			else
+			if (y == dirtLimit)
+			{
+				b.type = Block::grassBlock;
+			}
+			
+			if (y > stoneLimit)
 			{
 				b.type = Block::stone;
 
