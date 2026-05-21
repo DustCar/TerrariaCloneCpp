@@ -1,6 +1,7 @@
 #include "worldGenerator.h"
 #include "randomHelpers.h"
 #include <iostream>
+#include <FastNoiseLite.h>
 
 struct BlockWithChance 
 {
@@ -15,9 +16,9 @@ void generateWorld(GameMap& gameMap, int seed)
 
 	gameMap.create(w, h);
 
-	std::ranlux24_base rng(seed);
+	std::ranlux24_base rng(seed++);
 
-	std::vector<BlockWithChance> oreBlockChances =
+	/*std::vector<BlockWithChance> oreBlockChances =
 	{
 		{ Block::copper, 0.5f },
 		{ Block::iron, 0.3f },
@@ -32,8 +33,48 @@ void generateWorld(GameMap& gameMap, int seed)
 	{
 		sum += oreBlockChances[i].chance;
 		oreBlockSum[i] = sum;
+	}*/
+
+	// dirt noise
+	FastNoiseLite dirtNoiseGenerator;
+	dirtNoiseGenerator.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2S);
+	dirtNoiseGenerator.SetSeed(seed++);
+	dirtNoiseGenerator.SetFractalOctaves(1);
+	dirtNoiseGenerator.SetFrequency(0.02f);
+
+	// stone noise
+	FastNoiseLite stoneNoiseGenerator;
+	stoneNoiseGenerator.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2S);
+	stoneNoiseGenerator.SetSeed(seed++);
+	stoneNoiseGenerator.SetFractalLacunarity(4.f);
+	stoneNoiseGenerator.SetFractalOctaves(4);
+	stoneNoiseGenerator.SetFrequency(0.02f);
+
+	// noise data
+	std::vector<float> dirtNoise(w);
+	std::vector<float> stoneNoise(w);
+
+	// fill data. convert [-1,1] to [0,1] simultaneously
+	for (int i = 0; i < w; i++)
+	{
+		dirtNoise[i] = (dirtNoiseGenerator.GetNoise((float)i, 0.f) + 1) * 0.5;
+		stoneNoise[i] = (stoneNoiseGenerator.GetNoise((float)i, 0.f) + 1) * 0.5;
+
+		// make mountains steep/flat using power
+		stoneNoise[i] = std::pow(stoneNoise[i], 0.15f);
 	}
 
+	// dirt will be affected by stoneHeight so a -value allows stone to be at most 5 blocks above dirt
+	int dirtOffsetStart = -5;
+	int dirtOffsetEnd = 30;
+	// end - start = 35 layers of dirt
+
+	// stone block range
+	int stoneHeightStart = 90;
+	int stoneHeightEnd = 180;
+
+
+	/* Manual World Generation data
 	// block range min
 	int dirtHeight = 100;
 	int stoneHeight = 130;
@@ -47,9 +88,12 @@ void generateWorld(GameMap& gameMap, int seed)
 	int dirtDir = getRandomInt(rng, -2, 2);
 	int stoneDir = getRandomInt(rng, -2, 2);
 
+	*/
+
 	for (int x = 0; x < w; x++)
 	{
-		/* Dirt Blocks */
+		/* Manual World Generation
+		//// Dirt Blocks 
 		dirtCounter--;
 		if (dirtCounter <= 0)
 		{
@@ -79,7 +123,7 @@ void generateWorld(GameMap& gameMap, int seed)
 			}
 		}
 
-		/* Stone Blocks */
+		//// Stone Blocks 
 		stoneCounter--;
 		if (stoneCounter <= 0)
 		{
@@ -113,6 +157,13 @@ void generateWorld(GameMap& gameMap, int seed)
 		if (dirtHeight < 75) { dirtHeight = 75; }
 		if (stoneHeight > 150) { stoneHeight = 150; }
 
+		*/
+
+		// Lerp heights based on noise
+		int stoneHeight = stoneHeightStart + (stoneHeightEnd - stoneHeightStart) * stoneNoise[x];
+		int dirtHeight = dirtOffsetStart + (dirtOffsetEnd - dirtOffsetStart) * dirtNoise[x];
+		dirtHeight = stoneHeight - dirtHeight;
+
 		for (int y = 0; y < h; y++)
 		{
 			Block b;
@@ -130,7 +181,7 @@ void generateWorld(GameMap& gameMap, int seed)
 			{
 				b.type = Block::stone;
 
-				bool bOre = getBoolChance(rng, 0.1f);
+				/*bool bOre = getBoolChance(rng, 0.1f);
 				if (bOre && y > stoneHeight + oreOffset)
 				{
 					float roll = getRandomFloat(rng, 0.0f, 1.0f);
@@ -139,7 +190,7 @@ void generateWorld(GameMap& gameMap, int seed)
 					int ore = oreBlockChances[index].type;
 
 					b.type = ore;
-				}
+				}*/
 			}
 
 			gameMap.getBlockUnsafe(x, y) = b;

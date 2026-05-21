@@ -341,7 +341,7 @@ void DrawImGui(float& cameraZoom, float& cameraSpeed)
 	flags |= ImGuiSliderFlags_AlwaysClamp;
 	if (ImGui::BeginTabItem("Camera Settings"))
 	{
-		ImGui::SliderFloat("Camera Zoom:", &cameraZoom, 5.f, 150.f, "%.3f", flags);
+		ImGui::SliderFloat("Camera Zoom:", &cameraZoom, 3.f, 150.f, "%.3f", flags);
 		ImGui::SliderFloat("Camera Speed:", &cameraSpeed, 10.f, 150.f, "%.3f", flags);
 
 		ImGui::EndTabItem();

@@ -27,6 +27,7 @@ project(terraClone)
 add_subdirectory("thirdParty/raylib-5.0")
 add_subdirectory("thirdParty/imgui-docking-1.89.7")
 add_subdirectory("thirdParty/rlimgui")
+add_subdirectory("thirdParty/FastNoiseLite-1.1.1")
 
 # MY_SOURCES is a list of all source files for the game
 # This macro will be used to attach the sources to the executable
@@ -78,4 +79,4 @@ endif()
 target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/")
 target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/gameLayer/")
 target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/platform/")
-target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE raylib_static imgui rlimgui)
+target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE raylib_static imgui rlimgui fastNoiseLite)
