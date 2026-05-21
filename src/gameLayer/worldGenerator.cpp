@@ -11,9 +11,11 @@ struct BlockWithChance
 void generateWorld(GameMap& gameMap, int seed)
 {
 	int w = 900;
-	int h = 350;
+	int h = 400;
 
 	gameMap.create(w, h);
+
+	std::ranlux24_base rng(seed);
 
 	std::vector<BlockWithChance> oreBlockChances =
 	{
@@ -32,48 +34,104 @@ void generateWorld(GameMap& gameMap, int seed)
 		oreBlockSum[i] = sum;
 	}
 
-	int dirtLimit = 130;
-	int stoneLimit = 180;
+	// block range min
+	int dirtHeight = 100;
+	int stoneHeight = 130;
+	int oreOffset = 10;
 
-	std::ranlux24_base rng(seed);
+	// counters
+	int dirtCounter = getRandomInt(rng, 5, 35);
+	int stoneCounter = getRandomInt(rng, 5, 30);
 
-	int minDirt = 90, maxDirt = 159;
-	int minStone = 160, maxStone = 225;
-
-	int targetDirt = getRandomInt(rng, minDirt, maxDirt);
-	int targetStone = getRandomInt(rng, minStone, maxStone);
-
-	// blocks from targeted dirt/stone height to switch target up
-	int thresholdDirt = 33; 
-	int thresholdStone = 32;
+	// block "slope" direction
+	int dirtDir = getRandomInt(rng, -2, 2);
+	int stoneDir = getRandomInt(rng, -2, 2);
 
 	for (int x = 0; x < w; x++)
 	{
-		dirtLimit += (int)((targetDirt - dirtLimit) * 0.04f);
-		stoneLimit += (int)((targetStone - stoneLimit) * 0.04f);
+		/* Dirt Blocks */
+		dirtCounter--;
+		if (dirtCounter <= 0)
+		{
+			dirtCounter = getRandomInt(rng, 5, 35);
+			dirtDir = getRandomInt(rng, -2, 2);
+		}
+		
+		if (dirtDir < 0)
+		{
+			for (int i = dirtDir; i < 0; i++)
+			{
+				if (getBoolChance(rng, 0.2f))
+				{
+					dirtHeight--;
+				}
+			}
+			
+		}
+		else if (dirtDir > 0)
+		{
+			for (int i = dirtDir; i > 0; i--)
+			{
+				if (getBoolChance(rng, 0.25f))
+				{
+					dirtHeight++;
+				}
+			}
+		}
 
-		if (abs(targetDirt - dirtLimit) < thresholdDirt) { targetDirt = getRandomInt(rng, minDirt, maxDirt); }
-		if (abs(targetStone - stoneLimit) < thresholdStone) { targetStone = getRandomInt(rng, minStone, maxStone); }
+		/* Stone Blocks */
+		stoneCounter--;
+		if (stoneCounter <= 0)
+		{
+			stoneCounter = getRandomInt(rng, 5, 30);
+			stoneDir = getRandomInt(rng, -2, 2);
+		}
+
+		if (stoneDir < 0)
+		{
+			for (int i = stoneDir; i < 0; i++)
+			{
+				if (getBoolChance(rng, 0.2f))
+				{
+					stoneHeight--;
+				}
+			}
+
+		}
+		else if (stoneDir > 0)
+		{
+			for (int i = stoneDir; i > 0; i--)
+			{
+				if (getBoolChance(rng, 0.25f))
+				{
+					stoneHeight++;
+				}
+			}
+		}
+
+		// cap ranges; dirt has a "max" height, stone has a "min" height
+		if (dirtHeight < 75) { dirtHeight = 75; }
+		if (stoneHeight > 150) { stoneHeight = 150; }
 
 		for (int y = 0; y < h; y++)
 		{
 			Block b;
 
-			if (y > dirtLimit)
+			if (y > dirtHeight)
 			{
 				b.type = Block::dirt;
 			}
-			if (y == dirtLimit)
+			if (y == dirtHeight)
 			{
 				b.type = Block::grassBlock;
 			}
 			
-			if (y > stoneLimit)
+			if (y > stoneHeight)
 			{
 				b.type = Block::stone;
 
 				bool bOre = getBoolChance(rng, 0.1f);
-				if (bOre)
+				if (bOre && y > stoneHeight + oreOffset)
 				{
 					float roll = getRandomFloat(rng, 0.0f, 1.0f);
 					auto it = std::lower_bound(oreBlockSum.begin(), oreBlockSum.end(), roll);
