@@ -2,6 +2,7 @@
 #include "randomHelpers.h"
 #include <iostream>
 #include <FastNoiseLite.h>
+#include "helpers.h"
 
 struct BlockWithChance 
 {
@@ -160,8 +161,8 @@ void generateWorld(GameMap& gameMap, int seed)
 		*/
 
 		// Lerp heights based on noise
-		int stoneHeight = stoneHeightStart + (stoneHeightEnd - stoneHeightStart) * stoneNoise[x];
-		int dirtHeight = dirtOffsetStart + (dirtOffsetEnd - dirtOffsetStart) * dirtNoise[x];
+		int stoneHeight = lerp(stoneHeightStart, stoneHeightEnd, stoneNoise[x]);
+		int dirtHeight = lerp(dirtOffsetStart, dirtOffsetEnd, dirtNoise[x]);
 		dirtHeight = stoneHeight - dirtHeight;
 
 		for (int y = 0; y < h; y++)
