@@ -4,13 +4,15 @@
 #include <FastNoiseLite.h>
 #include "helpers.h"
 
+void SetGeneratorParams(FastNoiseLite& generator, int seed, const WorldParameters::NoiseParameters& params);
+
 struct BlockWithChance 
 {
 	int type;
 	float chance;
 };
 
-void generateWorld(GameMap& gameMap, int seed)
+void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 {
 	int w = 900;
 	int h = 400;
@@ -38,18 +40,11 @@ void generateWorld(GameMap& gameMap, int seed)
 
 	// dirt noise
 	FastNoiseLite dirtNoiseGenerator;
-	dirtNoiseGenerator.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2S);
-	dirtNoiseGenerator.SetSeed(seed++);
-	dirtNoiseGenerator.SetFractalOctaves(1);
-	dirtNoiseGenerator.SetFrequency(0.02f);
+	SetGeneratorParams(dirtNoiseGenerator, seed, params.dirtParams);
 
 	// stone noise
 	FastNoiseLite stoneNoiseGenerator;
-	stoneNoiseGenerator.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2S);
-	stoneNoiseGenerator.SetSeed(seed++);
-	stoneNoiseGenerator.SetFractalLacunarity(4.f);
-	stoneNoiseGenerator.SetFractalOctaves(4);
-	stoneNoiseGenerator.SetFrequency(0.02f);
+	SetGeneratorParams(stoneNoiseGenerator, seed, params.stoneParams);
 
 	// noise data
 	std::vector<float> dirtNoise(w);
@@ -169,6 +164,8 @@ void generateWorld(GameMap& gameMap, int seed)
 		{
 			Block b;
 
+			b.variant = getRandomInt(rng, 0, 3);
+
 			if (y > dirtHeight)
 			{
 				b.type = Block::dirt;
@@ -197,4 +194,20 @@ void generateWorld(GameMap& gameMap, int seed)
 			gameMap.getBlockUnsafe(x, y) = b;
 		}
 	}
+}
+
+
+void SetGeneratorParams(FastNoiseLite& generator, int seed, const WorldParameters::NoiseParameters& params)
+{
+	generator.SetNoiseType((FastNoiseLite::NoiseType)params.noiseType);
+	generator.SetSeed(seed++);
+	generator.SetFrequency(params.frequency);
+	generator.SetFractalType((FastNoiseLite::FractalType)params.fractalType);
+	generator.SetFractalOctaves(params.fractalOctaves);
+	generator.SetFractalLacunarity(params.fractalLacunarity);
+	generator.SetFractalGain(params.fractalGain);
+
+	generator.SetCellularDistanceFunction((FastNoiseLite::CellularDistanceFunction)params.cellDistFunc);
+	generator.SetCellularReturnType((FastNoiseLite::CellularReturnType)params.cellReturnType);
+	generator.SetCellularJitter(params.cellJitter);
 }

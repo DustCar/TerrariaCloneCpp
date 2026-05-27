@@ -12,6 +12,7 @@
 
 void ProcessMouseInput(int blockX, int blockY);
 void DrawImGui(float& cameraZoom, float& cameraSpeed);
+void DrawNoiseSettings(WorldParameters::NoiseParameters& noiseParams, const std::string& noiseLabel);
 
 // sure this is a global struct, but it's only global in this cpp file
 struct GameData
@@ -31,14 +32,14 @@ bool InitGame()
 {
 
 	assetManager.loadAll();
-	generateWorld(gameData.gameMap);
+	GenerateWorld(gameData.gameMap);
 
 	// store the random number generator
 	gameData.rng = std::ranlux24_base(std::random_device{}());
 
-	gameData.camera.target = { 50,100 }; // world-space center of view; will be used as camera position
-	gameData.camera.rotation = 0.0f;
-	gameData.camera.zoom = 25.0f;
+	gameData.camera.target = { 100, 150 }; // world-space center of view; will be used as camera position
+	gameData.camera.rotation = 0.f;
+	gameData.camera.zoom = 10.f;
 
 	return true;
 }
@@ -51,12 +52,12 @@ bool UpdateGame()
 	// cap deltaTime at 5 frames per second
 	if (deltaTime > 1.f / 5.f) { deltaTime = 1.f / 5.f; }
 
-	gameData.camera.offset = { GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f };
+	gameData.camera.offset = { GetScreenWidth() / 2.f, GetScreenHeight() / 2.f };
 
 	ClearBackground({ 75, 75, 150, 255 });
 	
 /* camera movement begin */
-	static float CAMERA_SPEED = 10.f;
+	static float CAMERA_SPEED = 50.f;
 	if (IsKeyDown(KEY_A)) { gameData.camera.target.x -= CAMERA_SPEED * deltaTime; }
 	if (IsKeyDown(KEY_D)) { gameData.camera.target.x += CAMERA_SPEED * deltaTime; }
 	if (IsKeyDown(KEY_W)) { gameData.camera.target.y -= CAMERA_SPEED * deltaTime; }
@@ -84,10 +85,10 @@ bool UpdateGame()
 	Vector2 bottomRightView = GetScreenToWorld2D({ (float)GetScreenWidth(), (float)GetScreenHeight() }, gameData.camera);
 
 	// padding
-	int startXView = (int)floorf(topLeftView.x - 1.0f);
-	int endXView = (int)ceilf(bottomRightView.x + 1.0f);
-	int startYView = (int)floorf(topLeftView.y - 1.0f);
-	int endYView = (int)ceilf(bottomRightView.y + 1.0f);
+	int startXView = (int)floorf(topLeftView.x - 1.f);
+	int endXView = (int)ceilf(bottomRightView.x + 1.f);
+	int startYView = (int)floorf(topLeftView.y - 1.f);
+	int endYView = (int)ceilf(bottomRightView.y + 1.f);
 
 
 	startXView = Clamp(startXView, 0, gameData.gameMap.w - 1);
@@ -300,10 +301,20 @@ void ProcessMouseInput(int blockX, int blockY)
 			}
 		}
 	}
+
+#if PRODUCTION_BUILD == 0
+
+	gameData.camera.zoom += (int)(GetMouseWheelMove() * 1);
+	gameData.camera.zoom = gameData.camera.zoom < 3 ? 3 : gameData.camera.zoom;
+	gameData.camera.zoom = gameData.camera.zoom > 50 ? 50 : gameData.camera.zoom;
+
+#endif
 }
 
 void DrawImGui(float& cameraZoom, float& cameraSpeed)
 {
+	ImGui::ShowDemoWindow();
+
 	ImGui::Begin("Game Editor");
 
 	ImGui::BeginTabBar("Tabs");
@@ -337,12 +348,59 @@ void DrawImGui(float& cameraZoom, float& cameraSpeed)
 		ImGui::EndTabItem();
 	}
 
-	ImGuiSliderFlags flags = 0;
-	flags |= ImGuiSliderFlags_AlwaysClamp;
+	ImGuiSliderFlags flags = ImGuiSliderFlags_AlwaysClamp;
 	if (ImGui::BeginTabItem("Camera Settings"))
 	{
-		ImGui::SliderFloat("Camera Zoom:", &cameraZoom, 3.f, 150.f, "%.3f", flags);
+		ImGui::SliderFloat("Camera Zoom:", &cameraZoom, 3.f, 100.f, "%.3f", flags);
 		ImGui::SliderFloat("Camera Speed:", &cameraSpeed, 10.f, 150.f, "%.3f", flags);
+
+		ImGui::EndTabItem();
+	}
+
+	/* Tab for world generation settings */
+	static WorldParameters worldParams;
+	static int worldSeed = 1234;
+	if (ImGui::BeginTabItem("World Parameters"))
+	{
+		ImGui::Text("World Settings");
+		ImGui::Separator();
+
+		// width and height
+		ImGui::AlignTextToFramePadding(); ImGui::Text("width, height:"); ImGui::SameLine();
+
+		ImGui::PushItemWidth(150.f);
+		ImGui::InputInt("##width", &worldParams.width, 0, 0); ImGui::SameLine();
+		ImGui::InputInt("##height", &worldParams.height, 0, 0);
+		ImGui::PopItemWidth();
+
+		// seed
+		ImGui::AlignTextToFramePadding(); ImGui::Text("seed:"); ImGui::SameLine();
+		
+		ImGui::PushItemWidth(200.f);
+		ImGui::InputInt("##worldSeed", &worldSeed, 0, 0);
+		ImGui::PopItemWidth();
+
+		ImGui::SameLine();
+		if (ImGui::Button("R"))
+		{
+			worldSeed = getRandomInt(std::ranlux24_base(std::random_device{}()), 0, (int)std::ranlux24_base::max());
+		}
+
+		// generator settings
+		ImGui::NewLine();
+		// dirt generator
+		ImGui::SeparatorText("Dirt Noise Generator Settings");
+		DrawNoiseSettings(worldParams.dirtParams, "dirt");
+
+		// stone generator
+		ImGui::SeparatorText("Stone Noise Generator Settings");
+		DrawNoiseSettings(worldParams.stoneParams, "stone");
+
+		// generate world
+		if (ImGui::Button("Re-generate"))
+		{
+			GenerateWorld(gameData.gameMap, worldParams, worldSeed);
+		}
 
 		ImGui::EndTabItem();
 	}
@@ -351,3 +409,108 @@ void DrawImGui(float& cameraZoom, float& cameraSpeed)
 
 	ImGui::End();
 }
+
+void DrawNoiseSettings(WorldParameters::NoiseParameters& noiseParams, const std::string& noiseLabel)
+{
+	const char* noiseTypes[] = {"OpenSimplex2", "OpenSimplex2S", "Cellular", "Perlin", "ValueCubic", "Value"};
+	const char* fractalTypes[] = { "None", "FBm", "Rigid" };
+
+	std::string typeLabel = "##" + noiseLabel + "Type";
+	std::string frequencyLabel = "##" + noiseLabel + "Frequency";
+	// fractal labels
+	std::string fractalLabel = "##" + noiseLabel + "Fractal";
+	std::string octavesLabel = "##" + noiseLabel + "Octaves";
+	std::string lacunarityLabel = "##" + noiseLabel + "Lacunarity";
+	std::string gainLabel = "##" + noiseLabel + "Gain";
+	// cellular labels
+	std::string cellDistLabel = "##" + noiseLabel + "Distance";
+	std::string cellReturnLabel = "##" + noiseLabel + "Return";
+	std::string cellJitterLabel = "##" + noiseLabel + "Jitter";
+
+	ImGui::PushItemWidth(200.f);
+	// noise type
+	ImGui::AlignTextToFramePadding(); ImGui::Text("Noise Type:"); ImGui::SameLine();
+	const char* typePreview = noiseTypes[noiseParams.noiseType];
+	if (ImGui::BeginCombo((typeLabel.c_str()), typePreview))
+	{
+		for (int i = 0; i < IM_ARRAYSIZE(noiseTypes); i++)
+		{
+			const bool bIsSelected = (noiseParams.noiseType == i);
+			if (ImGui::Selectable(noiseTypes[i], bIsSelected))
+			{
+				noiseParams.noiseType = i;
+			}
+
+			if (bIsSelected)
+			{
+				ImGui::SetItemDefaultFocus();
+			}
+		}
+		ImGui::EndCombo();
+	}
+
+	// frequency
+	ImGui::AlignTextToFramePadding(); ImGui::Text("Frequency:"); ImGui::SameLine();
+	ImGui::InputFloat(frequencyLabel.c_str(), &noiseParams.frequency, 0.f, 0.f, "%.2f");
+
+	ImGui::NewLine();
+	ImGui::TextDisabled("Fractal Settings");
+
+	// fractal type
+	ImGui::AlignTextToFramePadding(); ImGui::Text("Fractal Type:"); ImGui::SameLine();
+	const char* fractalPreview = fractalTypes[noiseParams.fractalType];
+	if (ImGui::BeginCombo(fractalLabel.c_str(), fractalPreview))
+	{
+		for (int i = 0; i < IM_ARRAYSIZE(fractalTypes); i++)
+		{
+			const bool bIsSelected = (noiseParams.fractalType == i);
+			if (ImGui::Selectable(fractalTypes[i], bIsSelected))
+			{
+				noiseParams.fractalType = i;
+			}
+
+			if (bIsSelected)
+			{
+				ImGui::SetItemDefaultFocus();
+			}
+		}
+		ImGui::EndCombo();
+	}
+
+	// fractal octaves
+	ImGui::AlignTextToFramePadding(); ImGui::Text("Octaves:"); ImGui::SameLine();
+	ImGui::InputInt(octavesLabel.c_str(), &noiseParams.fractalOctaves, 0, 0);
+
+	// fractal lacunarity
+	ImGui::AlignTextToFramePadding(); ImGui::Text("Lacunarity:"); ImGui::SameLine();
+	ImGui::InputFloat(lacunarityLabel.c_str(), &noiseParams.fractalLacunarity, 0.f, 0.f, "%.1f");
+
+	// fractal gain
+	ImGui::AlignTextToFramePadding(); ImGui::Text("Gain:"); ImGui::SameLine();
+	ImGui::InputFloat(gainLabel.c_str(), &noiseParams.fractalGain, 0.f, 0.f, "%.1f");
+
+	ImGui::NewLine();
+	ImGui::TextDisabled("Cellular Settings");
+	
+	// only enable if noise type is "Cellular"
+	ImGui::BeginDisabled(noiseParams.noiseType != 2);
+
+	// cell distance function
+	ImGui::AlignTextToFramePadding(); ImGui::Text("Distance Function:"); ImGui::SameLine();
+	ImGui::InputInt(cellDistLabel.c_str(), &noiseParams.cellDistFunc, 0, 0);
+
+	// cell return type
+	ImGui::AlignTextToFramePadding(); ImGui::Text("Return Type:"); ImGui::SameLine();
+	ImGui::InputInt(cellReturnLabel.c_str(), &noiseParams.cellReturnType, 0, 0);
+
+	// cell jitter
+	ImGui::AlignTextToFramePadding(); ImGui::Text("Jitter:"); ImGui::SameLine();
+	ImGui::InputFloat(cellJitterLabel.c_str(), &noiseParams.cellJitter, 0.f, 0.f, "%.1f");
+
+	ImGui::EndDisabled();
+
+	ImGui::PopItemWidth();
+
+	ImGui::NewLine();
+}
+

@@ -15,8 +15,8 @@ int main()
 	SetTraceLogLevel(LOG_NONE);
 #endif
 
-	const int SCR_WIDTH = 800;
-	const int SCR_HEIGHT = 600;
+	const int SCR_WIDTH = 1700;
+	const int SCR_HEIGHT = 800;
 
 	SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 	InitWindow(SCR_WIDTH, SCR_HEIGHT, "Raylib test window");
