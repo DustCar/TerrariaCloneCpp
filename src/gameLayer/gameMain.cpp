@@ -37,7 +37,7 @@ bool InitGame()
 	// store the random number generator
 	gameData.rng = std::ranlux24_base(std::random_device{}());
 
-	gameData.camera.target = { 100, 150 }; // world-space center of view; will be used as camera position
+	gameData.camera.target = { 100, 100 }; // world-space center of view; will be used as camera position
 	gameData.camera.rotation = 0.f;
 	gameData.camera.zoom = 10.f;
 
@@ -392,9 +392,6 @@ void DrawImGui(float& cameraZoom, float& cameraSpeed)
 		ImGui::SeparatorText("Dirt Noise Generator Settings");
 		DrawNoiseSettings(worldParams.dirtParams, "dirt");
 
-		// stone generator
-		ImGui::SeparatorText("Stone Noise Generator Settings");
-		DrawNoiseSettings(worldParams.stoneParams, "stone");
 
 		// generate world
 		if (ImGui::Button("Re-generate"))
@@ -417,6 +414,7 @@ void DrawNoiseSettings(WorldParameters::NoiseParameters& noiseParams, const std:
 
 	std::string typeLabel = "##" + noiseLabel + "Type";
 	std::string frequencyLabel = "##" + noiseLabel + "Frequency";
+	std::string noisePowerLabel = "##" + noiseLabel + "NoisePower";
 	// fractal labels
 	std::string fractalLabel = "##" + noiseLabel + "Fractal";
 	std::string octavesLabel = "##" + noiseLabel + "Octaves";
@@ -451,7 +449,11 @@ void DrawNoiseSettings(WorldParameters::NoiseParameters& noiseParams, const std:
 
 	// frequency
 	ImGui::AlignTextToFramePadding(); ImGui::Text("Frequency:"); ImGui::SameLine();
-	ImGui::InputFloat(frequencyLabel.c_str(), &noiseParams.frequency, 0.f, 0.f, "%.2f");
+	ImGui::InputFloat(frequencyLabel.c_str(), &noiseParams.frequency, 0.f, 0.f, "%.3f");
+
+	// noise power
+	ImGui::AlignTextToFramePadding(); ImGui::Text("Noise Power:"); ImGui::SameLine();
+	ImGui::InputFloat(noisePowerLabel.c_str(), &noiseParams.noisePower, 0.f, 0.f, "%.3f");
 
 	ImGui::NewLine();
 	ImGui::TextDisabled("Fractal Settings");

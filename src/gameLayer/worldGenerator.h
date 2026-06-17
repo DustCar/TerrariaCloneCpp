@@ -5,13 +5,14 @@ struct WorldParameters
 {
 	struct NoiseParameters
 	{
-		int noiseType = 0;
-		float frequency = 0.01f;
+		int noiseType = 1;			// noiseType: 1 == OpenSimplex2S
+		float frequency = 0.008f;
+		float noisePower = 1.7f;
 
-		int fractalType = 0;
-		int fractalOctaves = 3;
-		float fractalLacunarity = 2.f;
-		float fractalGain = 0.5f;
+		int fractalType = 1;		// fractalType: 1 == FBm
+		int fractalOctaves = 2;
+		float fractalLacunarity = 3.f;
+		float fractalGain = 0.7f;
 
 		int cellDistFunc = 0;
 		int cellReturnType = 0;
@@ -21,10 +22,7 @@ struct WorldParameters
 	int height = 400;
 
 	NoiseParameters dirtParams;
-	NoiseParameters stoneParams;
 
-	bool bBlendNoise = false;
-	int blendNoiseType = 0;
 };
 
 void GenerateWorld(GameMap& gameMap, const WorldParameters& params = {}, int seed = 1234);
