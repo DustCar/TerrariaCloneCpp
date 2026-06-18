@@ -8,8 +8,8 @@ void SetGeneratorParams(FastNoiseLite& generator, int seed, const WorldParameter
 
 void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 {
-	int w = 900;
-	int h = 400;
+	int w = params.width;
+	int h = params.height;
 
 	gameMap.create(w, h);
 
@@ -38,6 +38,15 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 
 	
 	/* Manual World Generation data */
+
+	// desert biome generation
+	const int desertEndPercent = (int)(w * 0.9f);
+	int desertBiomeStart = getRandomInt(rng, 50, desertEndPercent);
+
+	int desertEndPaddingHalf = (int)((w - desertEndPercent) * 0.5f);
+	int desertBiomeEnd = desertBiomeStart + desertEndPaddingHalf + getRandomInt(rng, 0, desertEndPaddingHalf);
+	if (desertBiomeEnd > w) { desertBiomeEnd = w; }
+
 	// stone block range
 	int stoneHeight = 120;
 
@@ -50,6 +59,8 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 
 	for (int x = 0; x < w; x++)
 	{
+		bool bInDesert = (x >= desertBiomeStart && x <= desertBiomeEnd);
+
 		/* Manual World Generation */
 		// Stone Blocks 
 		stoneDirectionTimer--;
@@ -89,7 +100,17 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 		if (stoneHeight < 75) { stoneHeight = 75; }
 		if (stoneHeight > 150) { stoneHeight = 150; }
 
-		
+		int dirtType = Block::dirt;
+		int grassType = Block::grassBlock;
+		int stoneType = Block::stone;
+
+		if (bInDesert)
+		{
+			dirtType = Block::sand;
+			grassType = Block::sand;
+			stoneType = Block::sandStone;
+		}
+
 		for (int y = 0; y < h; y++)
 		{
 			Block b;
@@ -98,16 +119,16 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 
 			if (y > dirtHeight)
 			{
-				b.type = Block::dirt;
+				b.type = dirtType;
 			}
 			if (y == dirtHeight)
 			{
-				b.type = Block::grassBlock;
+				b.type = grassType;
 			}
 			
 			if (y > stoneHeight)
 			{
-				b.type = Block::stone;
+				b.type = stoneType;
 
 			}
 
