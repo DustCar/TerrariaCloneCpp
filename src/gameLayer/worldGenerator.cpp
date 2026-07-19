@@ -33,28 +33,34 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 
 	// dirt will be affected by stoneHeight so a -value allows stone to be at most 5 blocks above dirt
 	int dirtOffsetStart = -7;
-	int dirtOffsetEnd = 35;
-	// end - start = 42 layers of dirt
+	int dirtOffsetEnd = 43;
+	// end - start = 57 layers of dirt
 
 	
 	/* Manual World Generation data */
 
 	// desert biome generation
-	const int desertEndPercent = (int)(w * 0.9f);
-	int desertBiomeStart = getRandomInt(rng, 50, desertEndPercent);
+	const int desertEndPercent = (int)(w * 0.7f);
+	int desertBiomeStart = getRandomInt(rng, 50, desertEndPercent - 50);
 
-	int desertEndPaddingHalf = (int)((w - desertEndPercent) * 0.5f);
+	// used as min length and for extra length for desert end
+	int desertEndPaddingHalf = (int)((w - desertEndPercent + 50) * 0.5f);
 	int desertBiomeEnd = desertBiomeStart + desertEndPaddingHalf + getRandomInt(rng, 0, desertEndPaddingHalf);
 	if (desertBiomeEnd > w) { desertBiomeEnd = w; }
 
+	// actual mid point value on map
+	int desertBiomeMid = (desertBiomeStart + desertBiomeEnd) * 0.5f;
+	// size of desert half
+	int desertHalfWidth = (desertBiomeEnd - desertBiomeStart) * 0.5f;
+
 	// stone block range
-	int stoneHeight = 120;
+	int stoneHeight = 90;
 
 	// counters
 	int stoneDirectionTimer = getRandomInt(rng, 10, 30);
 
 	// block "slope" direction
-	int stoneDir = getRandomInt(rng, -2, 2);
+	int stoneDir = getRandomInt(rng, -1, 1);
 
 
 	for (int x = 0; x < w; x++)
@@ -67,7 +73,7 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 		if (stoneDirectionTimer <= 0)
 		{
 			stoneDirectionTimer = getRandomInt(rng, 10, 30);
-			stoneDir = getRandomInt(rng, -2, 2);
+			stoneDir = getRandomInt(rng, -1, 1);
 		}
 
 		if (stoneDir < 0)
@@ -98,7 +104,7 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 
 		// cap ranges; 
 		if (stoneHeight < 75) { stoneHeight = 75; }
-		if (stoneHeight > 150) { stoneHeight = 150; }
+		if (stoneHeight > 120) { stoneHeight = 120; }
 
 		int dirtType = Block::dirt;
 		int grassType = Block::grassBlock;
@@ -130,6 +136,30 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 			{
 				b.type = stoneType;
 
+			}
+
+			if (bInDesert)
+			{
+				// use the desert mid and width to create a triangle shape by using a desert threshold
+				int desertDistanceFromMid = std::abs(x - desertBiomeMid);
+				// 0 at the edge, 1 at the middle
+				float desertMidDistanceRatio = 1 - desertDistanceFromMid / (float)desertHalfWidth;
+
+				desertMidDistanceRatio = std::clamp(desertMidDistanceRatio, 0.f, 1.f);
+				// power to affect shape
+				desertMidDistanceRatio = powf(desertMidDistanceRatio, 1.15f);
+
+				// when regular stone starts
+				int desertStoneThreshold = stoneHeight + 5;
+				// how deep the shape goes
+				int desertStoneDepth = stoneHeight - 15;
+
+				int desertShapeY = desertStoneThreshold + desertMidDistanceRatio * desertStoneDepth;
+
+				if (y > desertShapeY)
+				{
+					b.type = Block::stone;
+				}
 			}
 
 			gameMap.getBlockUnsafe(x, y) = b;

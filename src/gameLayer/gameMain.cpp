@@ -313,7 +313,7 @@ void ProcessMouseInput(int blockX, int blockY)
 
 void DrawImGui(float& cameraZoom, float& cameraSpeed)
 {
-	ImGui::ShowDemoWindow();
+	//ImGui::ShowDemoWindow();
 
 	ImGui::Begin("Game Editor");
 
