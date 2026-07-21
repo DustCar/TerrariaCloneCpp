@@ -12,7 +12,7 @@
 
 void ProcessMouseInput(int blockX, int blockY);
 void DrawImGui(float& cameraZoom, float& cameraSpeed);
-void DrawNoiseSettings(WorldParameters::NoiseParameters& noiseParams, const std::string& noiseLabel);
+void DrawNoiseSettings(WorldParameters::NoiseParameters& noiseParams, const std::string& noiseLabel, bool bHasNoisePower = true);
 void CreateSelectableComboList(const char* label, const char** options, int opCount, int* currentIndex);
 
 
@@ -59,7 +59,7 @@ bool UpdateGame()
 	ClearBackground({ 75, 75, 150, 255 });
 	
 /* camera movement begin */
-	static float CAMERA_SPEED = 50.f;
+	static float CAMERA_SPEED = 100.f;
 	if (IsKeyDown(KEY_A)) { gameData.camera.target.x -= CAMERA_SPEED * deltaTime; }
 	if (IsKeyDown(KEY_D)) { gameData.camera.target.x += CAMERA_SPEED * deltaTime; }
 	if (IsKeyDown(KEY_W)) { gameData.camera.target.y -= CAMERA_SPEED * deltaTime; }
@@ -283,7 +283,7 @@ void ProcessMouseInput(int blockX, int blockY)
 				if (b && b->type == Block::air)
 				{
 					b->type = gameData.selectedBlock;
-					b->variant = getRandomInt(gameData.rng, 0, 3);
+					b->variant = GetRandomInt(gameData.rng, 0, 3);
 				}
 			}
 		}
@@ -298,7 +298,7 @@ void ProcessMouseInput(int blockX, int blockY)
 				if (w && w->type == Block::air)
 				{
 					w->type = gameData.selectedBlock;
-					w->variant = getRandomInt(gameData.rng, 0, 3);
+					w->variant = GetRandomInt(gameData.rng, 0, 3);
 				}
 			}
 		}
@@ -385,14 +385,24 @@ void DrawImGui(float& cameraZoom, float& cameraSpeed)
 		ImGui::SameLine();
 		if (ImGui::Button("R"))
 		{
-			worldSeed = getRandomInt(std::ranlux24_base(std::random_device{}()), 0, (int)std::ranlux24_base::max());
+			worldSeed = GetRandomInt(std::ranlux24_base(std::random_device{}()), 0, (int)std::ranlux24_base::max());
 		}
 
 		// generator settings
 		ImGui::NewLine();
-		// dirt generator
+		// dirt noise generator
 		ImGui::SeparatorText("Dirt Noise Generator Settings");
 		DrawNoiseSettings(worldParams.dirtParams, "dirt");
+
+		ImGui::NewLine();
+		// cave noise generator
+		ImGui::SeparatorText("Cave Noise Generator Settings");
+		DrawNoiseSettings(worldParams.caveParams, "cave", false);
+
+		ImGui::NewLine();
+		// cave noise generator
+		ImGui::SeparatorText("Cave Noise 2 Generator Settings");
+		DrawNoiseSettings(worldParams.cave2Params, "cave2", false);
 
 		// generate world
 		if (ImGui::Button("Re-generate"))
@@ -408,10 +418,10 @@ void DrawImGui(float& cameraZoom, float& cameraSpeed)
 	ImGui::End();
 }
 
-void DrawNoiseSettings(WorldParameters::NoiseParameters& noiseParams, const std::string& noiseLabel)
+void DrawNoiseSettings(WorldParameters::NoiseParameters& noiseParams, const std::string& noiseLabel, bool bHasNoisePower)
 {
 	const char* noiseTypes[] = {"OpenSimplex2", "OpenSimplex2S", "Cellular", "Perlin", "ValueCubic", "Value"};
-	const char* fractalTypes[] = { "None", "FBm", "Rigid" };
+	const char* fractalTypes[] = { "None", "FBm", "Rigid", "PingPong" };
 	const char* cellDistance[] = { "Euclidean", "EuclideanSq", "Manhattan", "Hybrid"};
 	const char* cellReturn[] = { "CellValue", "Distance", "Distance2", "Distance2Add", "Distance2Sub", "Distance2Mul", "Distance2Div" };
 
@@ -438,8 +448,11 @@ void DrawNoiseSettings(WorldParameters::NoiseParameters& noiseParams, const std:
 	ImGui::InputFloat(frequencyLabel.c_str(), &noiseParams.frequency, 0.f, 0.f, "%.3f");
 
 	// noise power
-	ImGui::AlignTextToFramePadding(); ImGui::Text("Noise Power:"); ImGui::SameLine();
-	ImGui::InputFloat(noisePowerLabel.c_str(), &noiseParams.noisePower, 0.f, 0.f, "%.3f");
+	if (bHasNoisePower)
+	{
+		ImGui::AlignTextToFramePadding(); ImGui::Text("Noise Power:"); ImGui::SameLine();
+		ImGui::InputFloat(noisePowerLabel.c_str(), &noiseParams.noisePower, 0.f, 0.f, "%.3f");
+	}
 
 	ImGui::NewLine();
 	ImGui::TextDisabled("Fractal Settings");

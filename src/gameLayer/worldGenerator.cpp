@@ -19,17 +19,41 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 	FastNoiseLite dirtNoiseGenerator;
 	SetGeneratorParams(dirtNoiseGenerator, seed, params.dirtParams);
 
+	// cave noise
+	FastNoiseLite caveNoiseGenerator;
+	SetGeneratorParams(caveNoiseGenerator, seed, params.caveParams);
+
+	FastNoiseLite caveNoiseGenerator2;
+	SetGeneratorParams(caveNoiseGenerator2, seed, params.cave2Params);
+
 	// noise data
 	std::vector<float> dirtNoise(w);
+	std::vector<float> caveNoise(w * h);
+	std::vector<float> caveNoise2(w * h);
 
 	// fill data. convert [-1,1] to [0,1] simultaneously
 	for (int i = 0; i < w; i++)
 	{
-		dirtNoise[i] = (dirtNoiseGenerator.GetNoise((float)i, 0.f) + 1) * 0.5;
+		dirtNoise[i] = (dirtNoiseGenerator.GetNoise((float)i, 0.f) + 1) * 0.5f;
 
 		// make mountains steep/flat using power
 		dirtNoise[i] = std::pow(dirtNoise[i], params.dirtParams.noisePower);
 	}
+
+	for (int i = 0; i < w; i++)
+	{
+		for (int j = 0; j < h; j++)
+		{
+			caveNoise[j * w + i] = (caveNoiseGenerator.GetNoise((float)i, (float)j) + 1) * 0.5f;
+			caveNoise2[j * w + i] = (caveNoiseGenerator2.GetNoise((float)i, (float)j) + 1) * 0.5f;
+		}
+	}
+
+	// helper to get cave noise
+	auto GetCaveNoise = [&](const std::vector<float>& data, int x, int y)
+	{
+		return data[y * w + x];
+	};
 
 	// dirt will be affected by stoneHeight so a -value allows stone to be at most 5 blocks above dirt
 	int dirtOffsetStart = -7;
@@ -41,11 +65,11 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 
 	// desert biome generation
 	const int desertEndPercent = (int)(w * 0.7f);
-	int desertBiomeStart = getRandomInt(rng, 50, desertEndPercent - 50);
+	int desertBiomeStart = GetRandomInt(rng, 50, desertEndPercent - 50);
 
 	// used as min length and for extra length for desert end
 	int desertEndPaddingHalf = (int)((w - desertEndPercent + 50) * 0.5f);
-	int desertBiomeEnd = desertBiomeStart + desertEndPaddingHalf + getRandomInt(rng, 0, desertEndPaddingHalf);
+	int desertBiomeEnd = desertBiomeStart + desertEndPaddingHalf + GetRandomInt(rng, 0, desertEndPaddingHalf);
 	if (desertBiomeEnd > w) { desertBiomeEnd = w; }
 
 	// actual mid point value on map
@@ -57,10 +81,10 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 	int stoneHeight = 90;
 
 	// counters
-	int stoneDirectionTimer = getRandomInt(rng, 10, 30);
+	int stoneDirectionTimer = GetRandomInt(rng, 10, 30);
 
 	// block "slope" direction
-	int stoneDir = getRandomInt(rng, -1, 1);
+	int stoneDir = GetRandomInt(rng, -1, 1);
 
 
 	for (int x = 0; x < w; x++)
@@ -72,15 +96,15 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 		stoneDirectionTimer--;
 		if (stoneDirectionTimer <= 0)
 		{
-			stoneDirectionTimer = getRandomInt(rng, 10, 30);
-			stoneDir = getRandomInt(rng, -1, 1);
+			stoneDirectionTimer = GetRandomInt(rng, 10, 30);
+			stoneDir = GetRandomInt(rng, -1, 1);
 		}
 
 		if (stoneDir < 0)
 		{
 			for (int i = stoneDir; i < 0; i++)
 			{
-				if (getBoolChance(rng, 0.25f))
+				if (GetBoolChance(rng, 0.25f))
 				{
 					stoneHeight--;
 				}
@@ -91,7 +115,7 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 		{
 			for (int i = stoneDir; i > 0; i--)
 			{
-				if (getBoolChance(rng, 0.25f))
+				if (GetBoolChance(rng, 0.25f))
 				{
 					stoneHeight++;
 				}
@@ -121,12 +145,13 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 		{
 			Block b;
 
-			b.variant = getRandomInt(rng, 0, 3);
+			b.variant = GetRandomInt(rng, 0, 3);
 
 			if (y > dirtHeight)
 			{
 				b.type = dirtType;
 			}
+
 			if (y == dirtHeight)
 			{
 				b.type = grassType;
@@ -160,6 +185,12 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 				{
 					b.type = Block::stone;
 				}
+			}
+
+			float screenBlend = 1.f - (1.f - GetCaveNoise(caveNoise, x, y)) * (1.f - GetCaveNoise(caveNoise2, x, y));
+			if (screenBlend < 0.5f && screenBlend > 0.2f && y > stoneHeight + 2)
+			{
+				b.type = Block::air;
 			}
 
 			gameMap.getBlockUnsafe(x, y) = b;

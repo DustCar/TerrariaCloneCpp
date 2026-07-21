@@ -8,7 +8,7 @@ struct WorldParameters
 	*	- OpenSimplex2, OpenSimplex2S, Cellular, Perlin, ValueCubic, Value
 	* 
 	* Fractal types:
-	*	- None, FBm, Rigid
+	*	- None, FBm, Rigid, PingPong
 	* 
 	* Cell Distance funcitons:
 	*	- Euclidean, EuclideanSq, Manhattan, Hybrid
@@ -35,7 +35,21 @@ struct WorldParameters
 	int height = 400;
 
 	NoiseParameters dirtParams;
+	NoiseParameters caveParams;
+	NoiseParameters cave2Params;
 
+	WorldParameters()
+	{
+		caveParams.noiseType = 0;
+		caveParams.frequency = 0.015f;
+		caveParams.fractalOctaves = 4;
+		caveParams.fractalLacunarity = 2.f;
+		caveParams.fractalGain = 0.5f;
+
+		cave2Params.frequency = 0.015f;
+		cave2Params.fractalOctaves = 3;
+		cave2Params.fractalLacunarity = 2.f;
+	}
 };
 
 void GenerateWorld(GameMap& gameMap, const WorldParameters& params = {}, int seed = 1234);
