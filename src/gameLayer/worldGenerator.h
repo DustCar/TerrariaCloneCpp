@@ -3,6 +3,19 @@
 
 struct WorldParameters
 {
+	/*
+	* Noise types:
+	*	- OpenSimplex2, OpenSimplex2S, Cellular, Perlin, ValueCubic, Value
+	* 
+	* Fractal types:
+	*	- None, FBm, Rigid
+	* 
+	* Cell Distance funcitons:
+	*	- Euclidean, EuclideanSq, Manhattan, Hybrid
+	* 
+	* Cell Return types:
+	*	- CellValue, Distance, Distance2, Distance2Add, Distance2Sub, Distance2Mul, Distance2Div
+	*/
 	struct NoiseParameters
 	{
 		int noiseType = 1;			// noiseType: 1 == OpenSimplex2S

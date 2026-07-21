@@ -13,6 +13,8 @@
 void ProcessMouseInput(int blockX, int blockY);
 void DrawImGui(float& cameraZoom, float& cameraSpeed);
 void DrawNoiseSettings(WorldParameters::NoiseParameters& noiseParams, const std::string& noiseLabel);
+void CreateSelectableComboList(const char* label, const char** options, int opCount, int* currentIndex);
+
 
 // sure this is a global struct, but it's only global in this cpp file
 struct GameData
@@ -392,7 +394,6 @@ void DrawImGui(float& cameraZoom, float& cameraSpeed)
 		ImGui::SeparatorText("Dirt Noise Generator Settings");
 		DrawNoiseSettings(worldParams.dirtParams, "dirt");
 
-
 		// generate world
 		if (ImGui::Button("Re-generate"))
 		{
@@ -411,6 +412,8 @@ void DrawNoiseSettings(WorldParameters::NoiseParameters& noiseParams, const std:
 {
 	const char* noiseTypes[] = {"OpenSimplex2", "OpenSimplex2S", "Cellular", "Perlin", "ValueCubic", "Value"};
 	const char* fractalTypes[] = { "None", "FBm", "Rigid" };
+	const char* cellDistance[] = { "Euclidean", "EuclideanSq", "Manhattan", "Hybrid"};
+	const char* cellReturn[] = { "CellValue", "Distance", "Distance2", "Distance2Add", "Distance2Sub", "Distance2Mul", "Distance2Div" };
 
 	std::string typeLabel = "##" + noiseLabel + "Type";
 	std::string frequencyLabel = "##" + noiseLabel + "Frequency";
@@ -428,24 +431,7 @@ void DrawNoiseSettings(WorldParameters::NoiseParameters& noiseParams, const std:
 	ImGui::PushItemWidth(200.f);
 	// noise type
 	ImGui::AlignTextToFramePadding(); ImGui::Text("Noise Type:"); ImGui::SameLine();
-	const char* typePreview = noiseTypes[noiseParams.noiseType];
-	if (ImGui::BeginCombo((typeLabel.c_str()), typePreview))
-	{
-		for (int i = 0; i < IM_ARRAYSIZE(noiseTypes); i++)
-		{
-			const bool bIsSelected = (noiseParams.noiseType == i);
-			if (ImGui::Selectable(noiseTypes[i], bIsSelected))
-			{
-				noiseParams.noiseType = i;
-			}
-
-			if (bIsSelected)
-			{
-				ImGui::SetItemDefaultFocus();
-			}
-		}
-		ImGui::EndCombo();
-	}
+	CreateSelectableComboList(typeLabel.c_str(), noiseTypes, IM_ARRAYSIZE(noiseTypes), &noiseParams.noiseType);
 
 	// frequency
 	ImGui::AlignTextToFramePadding(); ImGui::Text("Frequency:"); ImGui::SameLine();
@@ -460,24 +446,7 @@ void DrawNoiseSettings(WorldParameters::NoiseParameters& noiseParams, const std:
 
 	// fractal type
 	ImGui::AlignTextToFramePadding(); ImGui::Text("Fractal Type:"); ImGui::SameLine();
-	const char* fractalPreview = fractalTypes[noiseParams.fractalType];
-	if (ImGui::BeginCombo(fractalLabel.c_str(), fractalPreview))
-	{
-		for (int i = 0; i < IM_ARRAYSIZE(fractalTypes); i++)
-		{
-			const bool bIsSelected = (noiseParams.fractalType == i);
-			if (ImGui::Selectable(fractalTypes[i], bIsSelected))
-			{
-				noiseParams.fractalType = i;
-			}
-
-			if (bIsSelected)
-			{
-				ImGui::SetItemDefaultFocus();
-			}
-		}
-		ImGui::EndCombo();
-	}
+	CreateSelectableComboList(fractalLabel.c_str(), fractalTypes, IM_ARRAYSIZE(fractalTypes), &noiseParams.fractalType);
 
 	// fractal octaves
 	ImGui::AlignTextToFramePadding(); ImGui::Text("Octaves:"); ImGui::SameLine();
@@ -499,16 +468,17 @@ void DrawNoiseSettings(WorldParameters::NoiseParameters& noiseParams, const std:
 
 	// cell distance function
 	ImGui::AlignTextToFramePadding(); ImGui::Text("Distance Function:"); ImGui::SameLine();
-	ImGui::InputInt(cellDistLabel.c_str(), &noiseParams.cellDistFunc, 0, 0);
+	CreateSelectableComboList(cellDistLabel.c_str(), cellDistance, IM_ARRAYSIZE(cellDistance), &noiseParams.cellDistFunc);
 
 	// cell return type
 	ImGui::AlignTextToFramePadding(); ImGui::Text("Return Type:"); ImGui::SameLine();
-	ImGui::InputInt(cellReturnLabel.c_str(), &noiseParams.cellReturnType, 0, 0);
+	CreateSelectableComboList(cellReturnLabel.c_str(), cellReturn, IM_ARRAYSIZE(cellReturn), &noiseParams.cellReturnType);
 
 	// cell jitter
 	ImGui::AlignTextToFramePadding(); ImGui::Text("Jitter:"); ImGui::SameLine();
 	ImGui::InputFloat(cellJitterLabel.c_str(), &noiseParams.cellJitter, 0.f, 0.f, "%.1f");
 
+	// Cellular end
 	ImGui::EndDisabled();
 
 	ImGui::PopItemWidth();
@@ -516,3 +486,22 @@ void DrawNoiseSettings(WorldParameters::NoiseParameters& noiseParams, const std:
 	ImGui::NewLine();
 }
 
+void CreateSelectableComboList(const char* label, const char** options, int opCount, int* currentIndex)
+{
+	const char* preview = options[*currentIndex];
+	if (ImGui::BeginCombo(label, preview))
+	{
+		for (int i = 0; i < opCount; i++)
+		{
+			const bool bIsSelected = (i == *currentIndex);
+
+			if (ImGui::Selectable(options[i], bIsSelected))
+				*currentIndex = i;
+
+			if (bIsSelected)
+				ImGui::SetItemDefaultFocus;
+		}
+
+		ImGui::EndCombo();
+	}
+}
