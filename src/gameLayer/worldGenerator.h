@@ -37,6 +37,11 @@ struct WorldParameters
 	NoiseParameters dirtParams;
 	NoiseParameters caveParams;
 	NoiseParameters cave2Params;
+	NoiseParameters cave3Params;
+
+	NoiseParameters caveBlendParams;
+
+	bool bBlendThirdCaveNoise = true;
 
 	WorldParameters()
 	{
@@ -49,6 +54,14 @@ struct WorldParameters
 		cave2Params.frequency = 0.015f;
 		cave2Params.fractalOctaves = 3;
 		cave2Params.fractalLacunarity = 2.f;
+
+		cave3Params.noiseType = 3;
+		cave3Params.frequency = 0.016f;
+		cave3Params.fractalOctaves = 3;
+		cave3Params.fractalLacunarity = 2.f;
+
+		caveBlendParams.frequency = 0.06f;
+		caveBlendParams.fractalOctaves = 1;
 	}
 };
 

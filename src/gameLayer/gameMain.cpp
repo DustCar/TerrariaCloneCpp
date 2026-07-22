@@ -394,15 +394,27 @@ void DrawImGui(float& cameraZoom, float& cameraSpeed)
 		ImGui::SeparatorText("Dirt Noise Generator Settings");
 		DrawNoiseSettings(worldParams.dirtParams, "dirt");
 
-		ImGui::NewLine();
 		// cave noise generator
 		ImGui::SeparatorText("Cave Noise Generator Settings");
 		DrawNoiseSettings(worldParams.caveParams, "cave", false);
 
-		ImGui::NewLine();
-		// cave noise generator
+		// cave noise 2 generator
 		ImGui::SeparatorText("Cave Noise 2 Generator Settings");
 		DrawNoiseSettings(worldParams.cave2Params, "cave2", false);
+
+		ImGui::Checkbox("BlendThirdNoise", &worldParams.bBlendThirdCaveNoise);
+
+		ImGui::BeginDisabled(!worldParams.bBlendThirdCaveNoise);
+
+		// cave noise 3 generator
+		ImGui::SeparatorText("Cave Noise 3 Generator Settings");
+		DrawNoiseSettings(worldParams.cave3Params, "cave3", false);
+
+		// cave noise blend generator
+		ImGui::SeparatorText("Cave Noise Blend Generator Settings");
+		DrawNoiseSettings(worldParams.caveBlendParams, "caveBlend", false);
+
+		ImGui::EndDisabled();
 
 		// generate world
 		if (ImGui::Button("Re-generate"))

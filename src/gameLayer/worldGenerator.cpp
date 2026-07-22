@@ -22,14 +22,19 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 	// cave noise
 	FastNoiseLite caveNoiseGenerator;
 	SetGeneratorParams(caveNoiseGenerator, seed, params.caveParams);
-
 	FastNoiseLite caveNoiseGenerator2;
 	SetGeneratorParams(caveNoiseGenerator2, seed, params.cave2Params);
+	FastNoiseLite caveNoiseGenerator3;
+	SetGeneratorParams(caveNoiseGenerator3, seed, params.cave3Params);
+	FastNoiseLite caveNoiseGeneratorBlend;
+	SetGeneratorParams(caveNoiseGeneratorBlend, seed, params.caveBlendParams);
 
 	// noise data
 	std::vector<float> dirtNoise(w);
 	std::vector<float> caveNoise(w * h);
 	std::vector<float> caveNoise2(w * h);
+	std::vector<float> caveNoise3(w * h);
+	std::vector<float> caveNoiseBlend(w * h);
 
 	// fill data. convert [-1,1] to [0,1] simultaneously
 	for (int i = 0; i < w; i++)
@@ -46,6 +51,8 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 		{
 			caveNoise[j * w + i] = (caveNoiseGenerator.GetNoise((float)i, (float)j) + 1) * 0.5f;
 			caveNoise2[j * w + i] = (caveNoiseGenerator2.GetNoise((float)i, (float)j) + 1) * 0.5f;
+			caveNoise3[j * w + i] = (caveNoiseGenerator3.GetNoise((float)i, (float)j) + 1) * 0.5f;
+			caveNoiseBlend[j * w + i] = (caveNoiseGeneratorBlend.GetNoise((float)i, (float)j) + 1) * 0.5f;
 		}
 	}
 
@@ -188,10 +195,23 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 			}
 
 			float screenBlend = 1.f - (1.f - GetCaveNoise(caveNoise, x, y)) * (1.f - GetCaveNoise(caveNoise2, x, y));
-			if (screenBlend < 0.5f && screenBlend > 0.2f && y > stoneHeight + 2)
+			if (params.bBlendThirdCaveNoise)
 			{
-				b.type = Block::air;
+
+				float blendResult = lerp(screenBlend, GetCaveNoise(caveNoise3, x, y), GetCaveNoise(caveNoiseBlend, x, y));
+				if (blendResult < 0.5f && blendResult > 0.2f && y > stoneHeight + 2)
+				{
+					b.type = Block::air;
+				}
 			}
+			else
+			{
+				if (screenBlend < 0.5f && screenBlend > 0.2f && y > stoneHeight + 2)
+				{
+					b.type = Block::air;
+				}
+			}
+			
 
 			gameMap.getBlockUnsafe(x, y) = b;
 		}
