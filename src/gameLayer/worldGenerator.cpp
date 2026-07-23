@@ -203,14 +203,14 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 			{
 
 				float blendResult = lerp(screenBlend, GetCaveNoise(caveNoise3, x, y), GetCaveNoise(caveNoiseBlend, x, y));
-				if (blendResult < 0.5f && blendResult > 0.2f && y > stoneHeight + 2)
+				if (blendResult < 0.5f && blendResult > 0.35f && y > stoneHeight + 2)
 				{
 					b.type = Block::air;
 				}
 			}
 			else
 			{
-				if (screenBlend < 0.5f && screenBlend > 0.2f && y > stoneHeight + 2)
+				if (screenBlend < 0.5f && screenBlend > 0.35f && y > stoneHeight + 2)
 				{
 					b.type = Block::air;
 				}
