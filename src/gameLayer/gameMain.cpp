@@ -397,7 +397,6 @@ void DrawImGui(float& cameraZoom, float& cameraSpeed)
 		// cave noise generator
 		ImGui::SeparatorText("Cave Noise Generator Settings");
 		DrawNoiseSettings(worldParams.caveParams, "cave", false);
-
 		// cave noise 2 generator
 		ImGui::SeparatorText("Cave Noise 2 Generator Settings");
 		DrawNoiseSettings(worldParams.cave2Params, "cave2", false);
@@ -409,7 +408,6 @@ void DrawImGui(float& cameraZoom, float& cameraSpeed)
 		// cave noise 3 generator
 		ImGui::SeparatorText("Cave Noise 3 Generator Settings");
 		DrawNoiseSettings(worldParams.cave3Params, "cave3", false);
-
 		// cave noise blend generator
 		ImGui::SeparatorText("Cave Noise Blend Generator Settings");
 		DrawNoiseSettings(worldParams.caveBlendParams, "caveBlend", false);

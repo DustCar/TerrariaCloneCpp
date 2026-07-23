@@ -45,21 +45,25 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 		dirtNoise[i] = std::pow(dirtNoise[i], params.dirtParams.noisePower);
 	}
 
-	for (int i = 0; i < w; i++)
+	// helper to fill noise vectors
+	auto FillNoiseDataFull = [&](std::vector<float>& noise, const FastNoiseLite& noiseGenerator)
 	{
-		for (int j = 0; j < h; j++)
+		for (int i = 0; i < w; i++)
 		{
-			caveNoise[j * w + i] = (caveNoiseGenerator.GetNoise((float)i, (float)j) + 1) * 0.5f;
-			caveNoise2[j * w + i] = (caveNoiseGenerator2.GetNoise((float)i, (float)j) + 1) * 0.5f;
-			caveNoise3[j * w + i] = (caveNoiseGenerator3.GetNoise((float)i, (float)j) + 1) * 0.5f;
-			caveNoiseBlend[j * w + i] = (caveNoiseGeneratorBlend.GetNoise((float)i, (float)j) + 1) * 0.5f;
+			for (int j = 0; j < h; j++)
+				noise[j * w + i] = (noiseGenerator.GetNoise((float)i, (float)j) + 1) * 0.5f;
 		}
-	}
+	};
+
+	FillNoiseDataFull(caveNoise, caveNoiseGenerator);
+	FillNoiseDataFull(caveNoise2, caveNoiseGenerator2);
+	FillNoiseDataFull(caveNoise3, caveNoiseGenerator3);
+	FillNoiseDataFull(caveNoiseBlend, caveNoiseGeneratorBlend);
 
 	// helper to get cave noise
-	auto GetCaveNoise = [&](const std::vector<float>& data, int x, int y)
+	auto GetCaveNoise = [&](const std::vector<float>& noise, int x, int y)
 	{
-		return data[y * w + x];
+		return noise[y * w + x];
 	};
 
 	// dirt will be affected by stoneHeight so a -value allows stone to be at most 5 blocks above dirt
