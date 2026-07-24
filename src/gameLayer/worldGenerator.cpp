@@ -168,7 +168,7 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 				b.type = grassType;
 			}
 			
-			if (y > stoneHeight)
+			if (y >= stoneHeight)
 			{
 				b.type = stoneType;
 
@@ -219,6 +219,53 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 
 			gameMap.getBlockUnsafe(x, y) = b;
 		}
+	}
+
+	// TODO: add perlin worms
+
+	for (int i = 0; i < 10; i++)
+	{
+		// randomized initial start
+		float x = GetRandomInt(rng, 15, w - 15);
+		float y = GetRandomInt(rng, stoneHeight, w - 15);
+
+		// direction worm moves towards
+		float dirX = GetRandomFloat(rng, -1.f, 1.f);
+		float dirY = GetRandomFloat(rng, -1.f, 1.f);
+
+		int wormLength = GetRandomInt(rng, 200, 400);
+		float radius = 4.5f;
+
+		int changeDirectionTime = GetRandomInt(rng, 5, 20);
+
+		// draw worm
+
+		// ceil to compensate for the extra .5, creating a fuller circle
+		int radiusInt = std::ceil(radius);
+		for (int ox = -radiusInt; ox <= radiusInt; ox++)
+		{
+			for (int oy = -radiusInt; oy <= radiusInt; oy++)
+			{
+				
+				float distSqrd = ox * ox + oy * oy;
+				if (distSqrd <= radius * radius)
+				{
+					float dx = x + ox;
+					float dy = y + oy;
+
+					auto b = gameMap.getBlockSafe(dx, dy);
+					if (b)
+					{
+						b->type = Block::blueRubyBlock;
+					}
+				}
+			}
+		}
+
+		/*for (int j = 0; j < wormLength; j++)
+		{
+
+		}*/
 	}
 }
 
