@@ -221,8 +221,7 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 		}
 	}
 
-	// TODO: add perlin worms
-
+	// perlin worms without the perlin
 	for (int i = 0; i < 10; i++)
 	{
 		// randomized initial start
@@ -234,38 +233,62 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 		float dirY = GetRandomFloat(rng, -1.f, 1.f);
 
 		int wormLength = GetRandomInt(rng, 200, 400);
-		float radius = 4.5f;
+		float radius = 2.5f;
 
 		int changeDirectionTime = GetRandomInt(rng, 5, 20);
 
 		// draw worm
-
-		// ceil to compensate for the extra .5, creating a fuller circle
-		int radiusInt = std::ceil(radius);
-		for (int ox = -radiusInt; ox <= radiusInt; ox++)
+		for (int j = 0; j < wormLength; j++)
 		{
-			for (int oy = -radiusInt; oy <= radiusInt; oy++)
+			// draw segment
+			int radiusInt = std::ceil(radius); // ceil to compensate for the extra .5, creating a fuller circle
+			for (int ox = -radiusInt; ox <= radiusInt; ox++)
 			{
-				
-				float distSqrd = ox * ox + oy * oy;
-				if (distSqrd <= radius * radius)
+				for (int oy = -radiusInt; oy <= radiusInt; oy++)
 				{
-					float dx = x + ox;
-					float dy = y + oy;
 
-					auto b = gameMap.getBlockSafe(dx, dy);
-					if (b)
+					float distSqrd = ox * ox + oy * oy;
+					if (distSqrd <= radius * radius)
 					{
-						b->type = Block::blueRubyBlock;
+						float dx = x + ox;
+						float dy = y + oy;
+
+						auto b = gameMap.getBlockSafe(dx, dy);
+						if (b)
+						{
+							b->type = Block::blueRubyBlock;
+						}
 					}
 				}
 			}
+
+			changeDirectionTime--;
+			if (changeDirectionTime <= 0)
+			{
+				changeDirectionTime = GetRandomInt(rng, 5, 10);
+
+				float keepDirAmount = 0.8f;
+
+				if (GetBoolChance(rng, 0.7f))
+				{
+					// keeps a large portion of the original direction, with minor adjustments
+					dirX = dirX * keepDirAmount + (GetRandomFloat(rng, -1.f, 1.f) * (1.f - keepDirAmount));
+					dirY = dirY * keepDirAmount + (GetRandomFloat(rng, -1.f, 1.f) * (1.f - keepDirAmount));
+				}
+				else
+				{
+					// opposite, keeps a small portion and has major adjustments
+					dirX = dirX * (1.f - keepDirAmount) + (GetRandomFloat(rng, -1.f, 1.f) * keepDirAmount);
+					dirY = dirY * (1.f - keepDirAmount) + (GetRandomFloat(rng, -1.f, 1.f) * keepDirAmount);
+				}
+
+			}
+
+			x += dirX * 1.f;
+			y += dirY * 1.f;
+
+			radius += (GetRandomFloat(rng, -0.2f, 0.2f));
 		}
-
-		/*for (int j = 0; j < wormLength; j++)
-		{
-
-		}*/
 	}
 }
 
