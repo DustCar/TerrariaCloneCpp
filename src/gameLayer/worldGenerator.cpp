@@ -221,19 +221,33 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 		}
 	}
 
-	// perlin worms without the perlin
-	for (int i = 0; i < 10; i++)
+	auto SpawnWorm = [&](float startX, float startY, int wormMin, int wormMax, float maxRadius)
 	{
-		// randomized initial start
-		float x = GetRandomInt(rng, 15, w - 15);
-		float y = GetRandomInt(rng, stoneHeight, w - 15);
-
 		// direction worm moves towards
 		float dirX = GetRandomFloat(rng, -1.f, 1.f);
 		float dirY = GetRandomFloat(rng, -1.f, 1.f);
 
-		int wormLength = GetRandomInt(rng, 200, 400);
-		float radius = 2.5f;
+		// bias worm movement based on if it spawns near the edges
+		if (startX < 20)
+		{
+			dirX = GetRandomFloat(rng, 0.8f, 1.f);
+		}
+		else if (startX > w - 20)
+		{
+			dirX = GetRandomFloat(rng, -1.f, -0.8f);
+		}
+
+		if (startY < stoneHeight)
+		{
+			dirY = GetRandomFloat(rng, 0.8f, 1.f);
+		}
+		else if (startY > h - 20)
+		{
+			dirY = GetRandomFloat(rng, -1.f, -0.8f);
+		}
+
+		int wormLength = GetRandomInt(rng, wormMin, wormMax);
+		float radius = 3.5f;
 
 		int changeDirectionTime = GetRandomInt(rng, 5, 20);
 
@@ -250,8 +264,8 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 					float distSqrd = ox * ox + oy * oy;
 					if (distSqrd <= radius * radius)
 					{
-						float dx = x + ox;
-						float dy = y + oy;
+						float dx = startX + ox;
+						float dy = startY + oy;
 
 						auto b = gameMap.getBlockSafe(dx, dy);
 						if (b)
@@ -265,11 +279,11 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 			changeDirectionTime--;
 			if (changeDirectionTime <= 0)
 			{
-				changeDirectionTime = GetRandomInt(rng, 5, 10);
+				changeDirectionTime = GetRandomInt(rng, 5, 20);
 
-				float keepDirAmount = 0.8f;
+				float keepDirAmount = 0.65f;
 
-				if (GetBoolChance(rng, 0.7f))
+				if (GetBoolChance(rng, 0.75f))
 				{
 					// keeps a large portion of the original direction, with minor adjustments
 					dirX = dirX * keepDirAmount + (GetRandomFloat(rng, -1.f, 1.f) * (1.f - keepDirAmount));
@@ -284,11 +298,21 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 
 			}
 
-			x += dirX * 1.f;
-			y += dirY * 1.f;
+			startX += dirX * 1.5f;
+			startY += dirY * 1.5f;
 
 			radius += (GetRandomFloat(rng, -0.2f, 0.2f));
+			radius = std::clamp(radius, 2.5f, maxRadius);
 		}
+	};
+
+	// perlin worms without the perlin noise
+	int nWorms = 13;
+	for (int i = 0; i <= nWorms; i++)
+	{
+		// separate the worms "uniformly" to avoid too much clumping
+		float segmentLength = w / nWorms;
+		SpawnWorm(GetRandomFloat(rng, segmentLength * i, segmentLength * (i + 1)), GetRandomFloat(rng, stoneHeight, h - 15.f), 75, 200, 5.8f);
 	}
 }
 
