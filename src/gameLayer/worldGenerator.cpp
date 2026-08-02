@@ -311,7 +311,7 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 	for (int i = 0; i <= nWorms; i++)
 	{
 		// separate the worms "uniformly" to avoid too much clumping
-		float segmentLength = w / nWorms;
+		float segmentLength = w / (float)nWorms;
 		SpawnWorm(GetRandomFloat(rng, segmentLength * i, segmentLength * (i + 1)), GetRandomFloat(rng, stoneHeight, h - 15.f), 75, 200, 5.8f);
 	}
 }
