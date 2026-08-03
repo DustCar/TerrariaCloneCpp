@@ -49,7 +49,7 @@ int main()
 		// removes gray box that covers the game screen
 		ImGui::PushStyleColor(ImGuiCol_WindowBg, {});
 		ImGui::PushStyleColor(ImGuiCol_DockingEmptyBg, {});
-		// allows docking widgets to main window
+		// allows docking widgets to main window; Passthru to allow input to pass to the main window
 		ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(),ImGuiDockNodeFlags_PassthruCentralNode);
 		ImGui::PopStyleColor(2);
 	/* imgui setup end */

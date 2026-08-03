@@ -29,6 +29,7 @@ struct GameData
 }gameData;
 
 AssetManager assetManager;
+static bool bShowImgui = true;
 
 bool InitGame()
 {
@@ -57,6 +58,8 @@ bool UpdateGame()
 	gameData.camera.offset = { GetScreenWidth() / 2.f, GetScreenHeight() / 2.f };
 
 	ClearBackground({ 75, 75, 150, 255 });
+
+	if (IsKeyPressed(KEY_F10)) { bShowImgui = !bShowImgui; }
 	
 /* camera movement begin */
 	static float CAMERA_SPEED = 100.f;
@@ -218,7 +221,10 @@ bool UpdateGame()
 
 /* simple imgui begin */
 #if PRODUCTION_BUILD == 0
-	DrawImGui(gameData.camera.zoom, CAMERA_SPEED);
+	if (bShowImgui)
+	{
+		DrawImGui(gameData.camera.zoom, CAMERA_SPEED);
+	}
 #endif
 /* simple imgui end */
 
@@ -267,32 +273,34 @@ void ProcessMouseInput(int blockX, int blockY)
 	// place block
 	if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON) && !IsMouseButtonDown(MOUSE_LEFT_BUTTON))
 	{
+		// check block on cursor
+		auto block = gameData.gameMap.getBlockSafe(blockX, blockY);
+
+		// check adjacent blocks
+		auto bUp = gameData.gameMap.getBlockSafe(blockX, blockY - 1);
+		auto bDown = gameData.gameMap.getBlockSafe(blockX, blockY + 1);
+		auto bRight = gameData.gameMap.getBlockSafe(blockX + 1, blockY);
+		auto bLeft = gameData.gameMap.getBlockSafe(blockX - 1, blockY);
+
+		bool bBlocksAdjacent = (bUp && bUp->type != Block::air) || (bDown && bDown->type != Block::air) || (bRight && bRight->type != Block::air) || (bLeft && bLeft->type != Block::air);
 		// placement of standard blocks
 		if (gameData.selectedBlock <= Block::emeraldBlock)
 		{
-			auto b = gameData.gameMap.getBlockSafe(blockX, blockY);
-			// check adjacent blocks
-			auto bUp = gameData.gameMap.getBlockSafe(blockX, blockY - 1);
-			auto bDown = gameData.gameMap.getBlockSafe(blockX, blockY + 1);
-			auto bRight = gameData.gameMap.getBlockSafe(blockX + 1, blockY);
-			auto bLeft = gameData.gameMap.getBlockSafe(blockX - 1, blockY);
-
 			// only place if the block can attach to another block and if space is empty
-			if ((bUp && bUp->type != Block::air) || (bDown && bDown->type != Block::air) || (bRight && bRight->type != Block::air) || (bLeft && bLeft->type != Block::air))
+			if (bBlocksAdjacent)
 			{
-				if (b && b->type == Block::air)
+				if (block && block->type == Block::air)
 				{
-					b->type = gameData.selectedBlock;
-					b->variant = GetRandomInt(gameData.rng, 0, 3);
+					block->type = gameData.selectedBlock;
+					block->variant = GetRandomInt(gameData.rng, 0, 3);
 				}
 			}
 		}
 		// placement of wall blocks
 		else
 		{
-			// check to see if a block has not been placed
-			auto block = gameData.gameMap.getBlockSafe(blockX, blockY);
-			if (block->type == Block::air)
+			// check to see if a block has not been placed and can attach to another block
+			if (block && block->type == Block::air && bBlocksAdjacent)
 			{
 				auto w = gameData.gameMap.getWallSafe(blockX, blockY);
 				if (w && w->type == Block::air)
@@ -370,7 +378,7 @@ void DrawImGui(float& cameraZoom, float& cameraSpeed)
 		// width and height
 		ImGui::AlignTextToFramePadding(); ImGui::Text("width, height:"); ImGui::SameLine();
 
-		ImGui::PushItemWidth(150.f);
+		ImGui::PushItemWidth(100.f);
 		ImGui::InputInt("##width", &worldParams.width, 0, 0); ImGui::SameLine();
 		ImGui::InputInt("##height", &worldParams.height, 0, 0);
 		ImGui::PopItemWidth();
@@ -378,7 +386,7 @@ void DrawImGui(float& cameraZoom, float& cameraSpeed)
 		// seed
 		ImGui::AlignTextToFramePadding(); ImGui::Text("seed:"); ImGui::SameLine();
 		
-		ImGui::PushItemWidth(200.f);
+		ImGui::PushItemWidth(100.f);
 		ImGui::InputInt("##worldSeed", &worldSeed, 0, 0);
 		ImGui::PopItemWidth();
 
@@ -386,6 +394,12 @@ void DrawImGui(float& cameraZoom, float& cameraSpeed)
 		if (ImGui::Button("R"))
 		{
 			worldSeed = GetRandomInt(std::ranlux24_base(std::random_device{}()), 0, (int)std::ranlux24_base::max());
+		}
+
+		ImGui::NewLine();
+		if (ImGui::Button("Re-generate##0"))
+		{
+			GenerateWorld(gameData.gameMap, worldParams, worldSeed);
 		}
 
 		// generator settings
@@ -401,6 +415,12 @@ void DrawImGui(float& cameraZoom, float& cameraSpeed)
 		ImGui::SeparatorText("Cave Noise 2 Generator Settings");
 		DrawNoiseSettings(worldParams.cave2Params, "cave2", false);
 
+		if (ImGui::Button("Re-generate##1"))
+		{
+			GenerateWorld(gameData.gameMap, worldParams, worldSeed);
+		}
+
+		ImGui::NewLine();
 		ImGui::Checkbox("BlendThirdNoise", &worldParams.bBlendThirdCaveNoise);
 
 		ImGui::BeginDisabled(!worldParams.bBlendThirdCaveNoise);
@@ -415,7 +435,7 @@ void DrawImGui(float& cameraZoom, float& cameraSpeed)
 		ImGui::EndDisabled();
 
 		// generate world
-		if (ImGui::Button("Re-generate"))
+		if (ImGui::Button("Re-generate##2"))
 		{
 			GenerateWorld(gameData.gameMap, worldParams, worldSeed);
 		}
@@ -448,7 +468,7 @@ void DrawNoiseSettings(WorldParameters::NoiseParameters& noiseParams, const std:
 	std::string cellReturnLabel = "##" + noiseLabel + "Return";
 	std::string cellJitterLabel = "##" + noiseLabel + "Jitter";
 
-	ImGui::PushItemWidth(200.f);
+	ImGui::PushItemWidth(125.f);
 	// noise type
 	ImGui::AlignTextToFramePadding(); ImGui::Text("Noise Type:"); ImGui::SameLine();
 	CreateSelectableComboList(typeLabel.c_str(), noiseTypes, IM_ARRAYSIZE(noiseTypes), &noiseParams.noiseType);
