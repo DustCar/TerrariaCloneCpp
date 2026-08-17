@@ -1,40 +1,37 @@
-#include "gameMap.h"
+#include "structure.h"
 #include <asserts.h>
 
-void GameMap::create(int width, int height)
+void Structure::create(int width, int height)
 {
-	// reset data
-	*this = {};
-	mapData.resize(width * height);
+	blockData.resize(width * height);
 	wallData.resize(width * height);
 
 	this->w = width;
 	this->h = height;
 
-	for (auto& block : mapData) { block = {}; }	// reset all block data
+	for (auto& block : blockData) { block = {}; }
 	for (auto& wall : wallData) { wall = {}; }
 }
 
-Block& GameMap::getBlockUnsafe(int x, int y)
+Block& Structure::getBlockUnsafe(int x, int y)
 {
-	permaAssertCommentDevelopment(mapData.size() == w * h, "Map data not initialized.");
+	permaAssertCommentDevelopment(blockData.size() == w * h, "Block data not initialized.");
 
 	permaAssertCommentDevelopment(x >= 0 && y >= 0 && x < w && y < h, "getBlockUnsafe out of bounds error.");
 
-	return mapData[y * w + x];
-
+	return blockData[y * w + x];
 }
 
-Block* GameMap::getBlockSafe(int x, int y)
+Block* Structure::getBlockSafe(int x, int y)
 {
-	permaAssertCommentDevelopment(mapData.size() == w * h, "Map data not initialized.");
+	permaAssertCommentDevelopment(blockData.size() == w * h, "Block data not initialized.");
 
 	if (x < 0 || y < 0 || x >= w || y >= h) { return nullptr; }
 
-	return &mapData[y * w + x];
+	return &blockData[y * w + x];
 }
 
-Block& GameMap::getWallUnsafe(int x, int y)
+Block& Structure::getWallUnsafe(int x, int y)
 {
 	permaAssertCommentDevelopment(wallData.size() == w * h, "Wall data not initialized.");
 
@@ -43,7 +40,7 @@ Block& GameMap::getWallUnsafe(int x, int y)
 	return wallData[y * w + x];
 }
 
-Block* GameMap::getWallSafe(int x, int y)
+Block* Structure::getWallSafe(int x, int y)
 {
 	permaAssertCommentDevelopment(wallData.size() == w * h, "Wall data not initialized.");
 
@@ -51,3 +48,4 @@ Block* GameMap::getWallSafe(int x, int y)
 
 	return &wallData[y * w + x];
 }
+

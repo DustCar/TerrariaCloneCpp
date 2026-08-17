@@ -270,7 +270,7 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 						auto b = gameMap.getBlockSafe(dx, dy);
 						if (b)
 						{
-							b->type = Block::blueRubyBlock;
+							b->type = Block::air;
 						}
 					}
 				}
@@ -307,8 +307,8 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 	};
 
 	// perlin worms without the perlin noise
-	int nWorms = 13;
-	for (int i = 0; i <= nWorms; i++)
+	int nWorms = 12;
+	for (int i = 0; i < nWorms; i++)
 	{
 		// separate the worms "uniformly" to avoid too much clumping
 		float segmentLength = w / (float)nWorms;
