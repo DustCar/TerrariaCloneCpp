@@ -94,4 +94,13 @@ struct Block
 	// style of the block (row in texture atlas)
 	std::uint8_t variant = 0;
 
+	// makes sure that a block is valid. typically a placeholder would be used here
+	void sanitize()
+	{
+		if (type >= BLOCKS_COUNT)
+		{
+			type = 0;
+		}
+	}
+
 };
