@@ -76,11 +76,11 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 
 	// desert biome generation
 	const int desertEndPercent = (int)(w * 0.7f);
-	int desertBiomeStart = GetRandomInt(rng, 50, desertEndPercent - 50);
+	int desertBiomeStart = getRandomInt(rng, 50, desertEndPercent - 50);
 
 	// used as min length and for extra length for desert end
 	int desertEndPaddingHalf = (int)((w - desertEndPercent + 50) * 0.5f);
-	int desertBiomeEnd = desertBiomeStart + desertEndPaddingHalf + GetRandomInt(rng, 0, desertEndPaddingHalf);
+	int desertBiomeEnd = desertBiomeStart + desertEndPaddingHalf + getRandomInt(rng, 0, desertEndPaddingHalf);
 	if (desertBiomeEnd > w) { desertBiomeEnd = w; }
 
 	// actual mid point value on map
@@ -92,10 +92,10 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 	int stoneHeight = 90;
 
 	// counters
-	int stoneDirectionTimer = GetRandomInt(rng, 10, 30);
+	int stoneDirectionTimer = getRandomInt(rng, 10, 30);
 
 	// block "slope" direction
-	int stoneDir = GetRandomInt(rng, -1, 1);
+	int stoneDir = getRandomInt(rng, -1, 1);
 
 
 	for (int x = 0; x < w; x++)
@@ -107,15 +107,15 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 		stoneDirectionTimer--;
 		if (stoneDirectionTimer <= 0)
 		{
-			stoneDirectionTimer = GetRandomInt(rng, 10, 30);
-			stoneDir = GetRandomInt(rng, -1, 1);
+			stoneDirectionTimer = getRandomInt(rng, 10, 30);
+			stoneDir = getRandomInt(rng, -1, 1);
 		}
 
 		if (stoneDir < 0)
 		{
 			for (int i = stoneDir; i < 0; i++)
 			{
-				if (GetBoolChance(rng, 0.25f))
+				if (getBoolChance(rng, 0.25f))
 				{
 					stoneHeight--;
 				}
@@ -126,7 +126,7 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 		{
 			for (int i = stoneDir; i > 0; i--)
 			{
-				if (GetBoolChance(rng, 0.25f))
+				if (getBoolChance(rng, 0.25f))
 				{
 					stoneHeight++;
 				}
@@ -156,7 +156,7 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 		{
 			Block b;
 
-			b.variant = GetRandomInt(rng, 0, 3);
+			b.variant = getRandomInt(rng, 0, 3);
 
 			if (y > dirtHeight)
 			{
@@ -224,32 +224,32 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 	auto SpawnWorm = [&](float startX, float startY, int wormMin, int wormMax, float maxRadius)
 	{
 		// direction worm moves towards
-		float dirX = GetRandomFloat(rng, -1.f, 1.f);
-		float dirY = GetRandomFloat(rng, -1.f, 1.f);
+		float dirX = getRandomFloat(rng, -1.f, 1.f);
+		float dirY = getRandomFloat(rng, -1.f, 1.f);
 
 		// bias worm movement based on if it spawns near the edges
 		if (startX < 20)
 		{
-			dirX = GetRandomFloat(rng, 0.8f, 1.f);
+			dirX = getRandomFloat(rng, 0.8f, 1.f);
 		}
 		else if (startX > w - 20)
 		{
-			dirX = GetRandomFloat(rng, -1.f, -0.8f);
+			dirX = getRandomFloat(rng, -1.f, -0.8f);
 		}
 
 		if (startY < stoneHeight)
 		{
-			dirY = GetRandomFloat(rng, 0.8f, 1.f);
+			dirY = getRandomFloat(rng, 0.8f, 1.f);
 		}
 		else if (startY > h - 20)
 		{
-			dirY = GetRandomFloat(rng, -1.f, -0.8f);
+			dirY = getRandomFloat(rng, -1.f, -0.8f);
 		}
 
-		int wormLength = GetRandomInt(rng, wormMin, wormMax);
+		int wormLength = getRandomInt(rng, wormMin, wormMax);
 		float radius = 3.5f;
 
-		int changeDirectionTime = GetRandomInt(rng, 5, 20);
+		int changeDirectionTime = getRandomInt(rng, 5, 20);
 
 		// draw worm
 		for (int j = 0; j < wormLength; j++)
@@ -279,21 +279,21 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 			changeDirectionTime--;
 			if (changeDirectionTime <= 0)
 			{
-				changeDirectionTime = GetRandomInt(rng, 5, 20);
+				changeDirectionTime = getRandomInt(rng, 5, 20);
 
 				float keepDirAmount = 0.65f;
 
-				if (GetBoolChance(rng, 0.75f))
+				if (getBoolChance(rng, 0.75f))
 				{
 					// keeps a large portion of the original direction, with minor adjustments
-					dirX = dirX * keepDirAmount + (GetRandomFloat(rng, -1.f, 1.f) * (1.f - keepDirAmount));
-					dirY = dirY * keepDirAmount + (GetRandomFloat(rng, -1.f, 1.f) * (1.f - keepDirAmount));
+					dirX = dirX * keepDirAmount + (getRandomFloat(rng, -1.f, 1.f) * (1.f - keepDirAmount));
+					dirY = dirY * keepDirAmount + (getRandomFloat(rng, -1.f, 1.f) * (1.f - keepDirAmount));
 				}
 				else
 				{
 					// opposite, keeps a small portion and has major adjustments
-					dirX = dirX * (1.f - keepDirAmount) + (GetRandomFloat(rng, -1.f, 1.f) * keepDirAmount);
-					dirY = dirY * (1.f - keepDirAmount) + (GetRandomFloat(rng, -1.f, 1.f) * keepDirAmount);
+					dirX = dirX * (1.f - keepDirAmount) + (getRandomFloat(rng, -1.f, 1.f) * keepDirAmount);
+					dirY = dirY * (1.f - keepDirAmount) + (getRandomFloat(rng, -1.f, 1.f) * keepDirAmount);
 				}
 
 			}
@@ -301,7 +301,7 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 			startX += dirX * 1.5f;
 			startY += dirY * 1.5f;
 
-			radius += (GetRandomFloat(rng, -0.2f, 0.2f));
+			radius += (getRandomFloat(rng, -0.2f, 0.2f));
 			radius = std::clamp(radius, 2.5f, maxRadius);
 		}
 	};
@@ -312,7 +312,7 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 	{
 		// separate the worms "uniformly" to avoid too much clumping
 		float segmentLength = w / (float)nWorms;
-		SpawnWorm(GetRandomFloat(rng, segmentLength * i, segmentLength * (i + 1)), GetRandomFloat(rng, stoneHeight, h - 15.f), 75, 200, 5.8f);
+		SpawnWorm(getRandomFloat(rng, segmentLength * i, segmentLength * (i + 1)), getRandomFloat(rng, stoneHeight, h - 15.f), 75, 200, 5.8f);
 	}
 }
 

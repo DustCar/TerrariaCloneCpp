@@ -1,7 +1,7 @@
 #pragma once
 
-bool InitGame();
+bool initGame();
 
-bool UpdateGame();
+bool updateGame();
 
-void CloseGame();
+void closeGame();

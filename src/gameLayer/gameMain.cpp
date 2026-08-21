@@ -31,7 +31,7 @@ struct GameData
 AssetManager assetManager;
 static bool bShowImgui = true;
 
-bool InitGame()
+bool initGame()
 {
 
 	assetManager.loadAll();
@@ -47,7 +47,7 @@ bool InitGame()
 	return true;
 }
 
-bool UpdateGame()
+bool updateGame()
 {
 	ImGuiIO& io = ImGui::GetIO();
 
@@ -233,7 +233,7 @@ bool UpdateGame()
 	return true;
 }
 
-void CloseGame()
+void closeGame()
 {
 
 }
@@ -292,7 +292,7 @@ void ProcessMouseInput(int blockX, int blockY)
 				if (block && block->type == Block::air)
 				{
 					block->type = gameData.selectedBlock;
-					block->variant = GetRandomInt(gameData.rng, 0, 3);
+					block->variant = getRandomInt(gameData.rng, 0, 3);
 				}
 			}
 		}
@@ -306,7 +306,7 @@ void ProcessMouseInput(int blockX, int blockY)
 				if (w && w->type == Block::air)
 				{
 					w->type = gameData.selectedBlock;
-					w->variant = GetRandomInt(gameData.rng, 0, 3);
+					w->variant = getRandomInt(gameData.rng, 0, 3);
 				}
 			}
 		}
@@ -393,7 +393,7 @@ void DrawImGui(float& cameraZoom, float& cameraSpeed)
 		ImGui::SameLine();
 		if (ImGui::Button("R"))
 		{
-			worldSeed = GetRandomInt(std::ranlux24_base(std::random_device{}()), 0, (int)std::ranlux24_base::max());
+			worldSeed = getRandomInt(std::ranlux24_base(std::random_device{}()), 0, (int)std::ranlux24_base::max());
 		}
 
 		ImGui::NewLine();

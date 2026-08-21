@@ -34,7 +34,7 @@ int main()
 	SetupImGuiAmethystStyle();
 /* imgui setup end */
 
-	if (!InitGame())
+	if (!initGame())
 	{
 		return 0;
 	}
@@ -55,7 +55,7 @@ int main()
 	/* imgui setup end */
 
 		
-		if (!UpdateGame())
+		if (!updateGame())
 		{
 			CloseWindow();
 		}
@@ -67,7 +67,7 @@ int main()
 
 	CloseWindow();
 
-	CloseGame();
+	closeGame();
 
 	rlImGuiShutdown();
 
