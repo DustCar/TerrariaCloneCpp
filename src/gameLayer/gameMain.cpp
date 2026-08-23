@@ -9,12 +9,17 @@
 #include <raymath.h>
 #include <randomHelpers.h>
 #include <worldGenerator.h>
+#include <optional>
 
 void ProcessMouseInput(int blockX, int blockY);
 void DrawImGui(float& cameraZoom, float& cameraSpeed);
 void DrawNoiseSettings(WorldParameters::NoiseParameters& noiseParams, const std::string& noiseLabel, bool bHasNoisePower = true);
 void CreateSelectableComboList(const char* label, const char** options, int opCount, int* currentIndex);
 
+bool operator==(const Vector2& a, const Vector2& b)
+{
+	return a.x == b.x && a.y == b.y;
+}
 
 // sure this is a global struct, but it's only global in this cpp file
 struct GameData
@@ -24,7 +29,9 @@ struct GameData
 
 	int selectedBlock = Block::dirt;
 
-	std::ranlux24_base rng;
+	std::optional<Vector2> selectionStart;
+	std::optional<Vector2> selectionEnd;
+
 
 }gameData;
 
@@ -36,9 +43,6 @@ bool initGame()
 
 	assetManager.loadAll();
 	GenerateWorld(gameData.gameMap);
-
-	// store the random number generator
-	gameData.rng = std::ranlux24_base(std::random_device{}());
 
 	gameData.camera.target = { 100, 100 }; // world-space center of view; will be used as camera position
 	gameData.camera.rotation = 0.f;
@@ -74,6 +78,49 @@ bool updateGame()
 	Vector2 worldPos = GetScreenToWorld2D(GetMousePosition(), gameData.camera);
 	int blockX = (int)floor(worldPos.x);
 	int blockY = (int)floor(worldPos.y);
+
+	if (bShowImgui)
+	{
+		if (IsKeyPressed(KEY_ONE)) 
+		{
+			// allow to reset selection
+			if (gameData.selectionStart && gameData.selectionStart == Vector2{ (float)blockX, (float)blockY })
+			{
+				gameData.selectionStart.reset();
+				gameData.selectionEnd.reset();
+			}
+			else // else just set start
+			{
+				gameData.selectionStart = Vector2{ (float)blockX, (float)blockY };
+			}
+		}
+		// set end selection
+		if (IsKeyPressed(KEY_TWO)) { gameData.selectionEnd = Vector2{ (float)blockX, (float)blockY }; }
+
+		// on first selection set other selection also. avoids start defaulting to (0,0)
+		if (!gameData.selectionStart.has_value() && gameData.selectionEnd)
+		{
+			gameData.selectionStart = Vector2{ (float)blockX, (float)blockY };
+		}
+		else if (gameData.selectionStart && !gameData.selectionEnd.has_value())
+		{
+			gameData.selectionEnd = Vector2{ (float)blockX, (float)blockY };
+		}
+
+		// swap locations if start > end to avoid weird math
+		if (gameData.selectionStart && gameData.selectionEnd)
+		{
+			if (gameData.selectionStart->x > gameData.selectionEnd->x)
+			{
+				std::swap(gameData.selectionStart->x, gameData.selectionEnd->x);
+			}
+			if (gameData.selectionStart->y > gameData.selectionEnd->y)
+			{
+				std::swap(gameData.selectionStart->y, gameData.selectionEnd->y);
+			}
+		}
+		
+	}
 
 	if (!io.WantCaptureMouse)
 	{
@@ -215,6 +262,23 @@ bool updateGame()
 		);
 	}
 
+	if (bShowImgui)
+	{
+		if (gameData.selectionStart && gameData.selectionEnd)
+		{
+			Rectangle rec;
+			rec.x = gameData.selectionStart->x;
+			rec.y = gameData.selectionStart->y;
+			rec.width = gameData.selectionEnd->x - gameData.selectionStart->x;
+			rec.height = gameData.selectionEnd->y - gameData.selectionStart->y;
+
+			rec.width++;
+			rec.height++;
+
+			DrawRectangleLinesEx(rec, 0.1f, { 20, 101, 250, 145 });
+		}
+	}
+
 	EndMode2D();
 /* draw world end */
 
@@ -240,6 +304,8 @@ void closeGame()
 
 void ProcessMouseInput(int blockX, int blockY)
 {
+	std::ranlux24_base rng;
+
 	// bool to avoid destroying walls behind blocks immediately
 	static bool bDestroyingBlocks = false;
 
@@ -292,7 +358,7 @@ void ProcessMouseInput(int blockX, int blockY)
 				if (block && block->type == Block::air)
 				{
 					block->type = gameData.selectedBlock;
-					block->variant = getRandomInt(gameData.rng, 0, 3);
+					block->variant = getRandomInt(rng, 0, 3);
 				}
 			}
 		}
@@ -306,7 +372,7 @@ void ProcessMouseInput(int blockX, int blockY)
 				if (w && w->type == Block::air)
 				{
 					w->type = gameData.selectedBlock;
-					w->variant = getRandomInt(gameData.rng, 0, 3);
+					w->variant = getRandomInt(rng, 0, 3);
 				}
 			}
 		}
