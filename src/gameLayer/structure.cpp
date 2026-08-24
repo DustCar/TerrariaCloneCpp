@@ -49,6 +49,7 @@ Block* Structure::getWallSafe(int x, int y)
 	return &wallData[y * w + x];
 }
 
+// copy structure from map data
 void Structure::copyFromMap(GameMap& map, Vector2 start, Vector2 end)
 {
 	// multiple checks to constrain start and end coords
@@ -87,23 +88,23 @@ void Structure::copyFromMap(GameMap& map, Vector2 start, Vector2 end)
 	}
 }
 
+// paste structure into map data
 void Structure::pasteIntoMap(GameMap& map, Vector2 start)
 {
 	for (int y = 0; y < h; y++)
 	{
 		for (int x = 0; x < w; x++)
 		{
-			auto w = getWallSafe(x, y);
+			auto w = map.getWallSafe(x + start.x, y + start.y);
 			if (w)
 			{
-				*w = getWallUnsafe(x + start.x, y + start.y);
+				*w = getWallUnsafe(x, y);
 			}
 
-			auto b = getBlockSafe(x, y);
-
+			auto b = map.getBlockSafe(x + start.x, y + start.y);
 			if (b)
 			{
-				*b = getBlockUnsafe(x + start.x, y + start.y);
+				*b = getBlockUnsafe(x, y);
 			}
 		}
 	}

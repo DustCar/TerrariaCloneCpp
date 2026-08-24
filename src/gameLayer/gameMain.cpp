@@ -10,6 +10,7 @@
 #include <randomHelpers.h>
 #include <worldGenerator.h>
 #include <optional>
+#include <structure.h>
 
 void ProcessMouseInput(int blockX, int blockY);
 void DrawImGui(float& cameraZoom, float& cameraSpeed);
@@ -31,7 +32,9 @@ struct GameData
 
 	std::optional<Vector2> selectionStart;
 	std::optional<Vector2> selectionEnd;
+	Structure copyStructure;
 
+	std::ranlux24_base rng;
 
 }gameData;
 
@@ -96,6 +99,10 @@ bool updateGame()
 		}
 		// set end selection
 		if (IsKeyPressed(KEY_TWO)) { gameData.selectionEnd = Vector2{ (float)blockX, (float)blockY }; }
+		if (IsKeyPressed(KEY_THREE))
+		{
+			gameData.copyStructure.pasteIntoMap(gameData.gameMap, Vector2{ (float)blockX, (float)blockY });
+		}
 
 		// on first selection set other selection also. avoids start defaulting to (0,0)
 		if (!gameData.selectionStart.has_value() && gameData.selectionEnd)
@@ -304,7 +311,7 @@ void closeGame()
 
 void ProcessMouseInput(int blockX, int blockY)
 {
-	std::ranlux24_base rng;
+	
 
 	// bool to avoid destroying walls behind blocks immediately
 	static bool bDestroyingBlocks = false;
@@ -358,7 +365,7 @@ void ProcessMouseInput(int blockX, int blockY)
 				if (block && block->type == Block::air)
 				{
 					block->type = gameData.selectedBlock;
-					block->variant = getRandomInt(rng, 0, 3);
+					block->variant = getRandomInt(gameData.rng, 0, 3);
 				}
 			}
 		}
@@ -372,7 +379,7 @@ void ProcessMouseInput(int blockX, int blockY)
 				if (w && w->type == Block::air)
 				{
 					w->type = gameData.selectedBlock;
-					w->variant = getRandomInt(rng, 0, 3);
+					w->variant = getRandomInt(gameData.rng, 0, 3);
 				}
 			}
 		}
@@ -396,6 +403,11 @@ void DrawImGui(float& cameraZoom, float& cameraSpeed)
 	ImGui::BeginTabBar("Tabs");
 	if (ImGui::BeginTabItem("Block Selector"))
 	{
+		if (ImGui::Button("Copy") && gameData.selectionStart.has_value() && gameData.selectionEnd.has_value())
+		{
+			gameData.copyStructure.copyFromMap(gameData.gameMap, *gameData.selectionStart, *gameData.selectionEnd);
+		}
+
 		for (int i = 1; i < Block::BLOCKS_COUNT; i++)
 		{
 			auto atlas = getTextureAtlas(i, 0, 32, 32);
