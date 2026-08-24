@@ -16,12 +16,18 @@ bool saveBlockDataToFile(std::vector<Block> blocks, int width, int height, const
 	if (blocks.size() == 0) { return false; }
 
 	// write w and h to file
-	f.write((const char*)&width, sizeof(width));
-	f.write((const char*)&height, sizeof(height));
+	if (!f.write((const char*)&width, sizeof(width)) || !f.write((const char*)&height, sizeof(height)))
+	{
+		return false;
+	}
 
 	// write blocks data to file
-	f.write((const char*)blocks.data(), sizeof(Block) * blocks.size());
+	if (!f.write((const char*)blocks.data(), sizeof(Block) * blocks.size()))
+	{
+		return false;
+	}
 
+	f.close();
 	return true;
 }
 
@@ -45,7 +51,6 @@ bool loadBlockDataFromFile(std::vector<Block>& blocks, int& width, int& height, 
 	// check if file can't be read or if either dimension is 0 or smaller
 	if (!f || width <= 0 || height <= 0)
 	{
-		f.close();
 		return false;
 	}
 
@@ -65,7 +70,6 @@ bool loadBlockDataFromFile(std::vector<Block>& blocks, int& width, int& height, 
 		blocks.clear();
 		width = 0;
 		height = 0;
-		f.close();
 		return false;
 	}
 
