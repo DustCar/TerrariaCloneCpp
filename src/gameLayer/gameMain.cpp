@@ -11,6 +11,7 @@
 #include <worldGenerator.h>
 #include <optional>
 #include <structure.h>
+#include <saveMap.h>
 
 void ProcessMouseInput(int blockX, int blockY);
 void DrawImGui(float& cameraZoom, float& cameraSpeed);
@@ -33,6 +34,8 @@ struct GameData
 	std::optional<Vector2> selectionStart;
 	std::optional<Vector2> selectionEnd;
 	Structure copyStructure;
+
+	char saveName[100] = {};
 
 	std::ranlux24_base rng;
 
@@ -406,6 +409,30 @@ void DrawImGui(float& cameraZoom, float& cameraSpeed)
 		if (ImGui::Button("Copy") && gameData.selectionStart.has_value() && gameData.selectionEnd.has_value())
 		{
 			gameData.copyStructure.copyFromMap(gameData.gameMap, *gameData.selectionStart, *gameData.selectionEnd);
+		}
+
+		ImGui::InputText("File Name", gameData.saveName, sizeof(gameData.saveName));
+
+		if (ImGui::Button("Save to File"))
+		{
+			std::string path = RESOURCES_PATH "structures/";
+			path += gameData.saveName;
+			path += ".bin";
+			
+			saveBlockDataToFile(gameData.copyStructure.blockData,
+				gameData.copyStructure.wallData, gameData.copyStructure.w, 
+				gameData.copyStructure.h, path.c_str());
+		}
+
+		if (ImGui::Button("Load from File"))
+		{
+			std::string path = RESOURCES_PATH "structures/";
+			path += gameData.saveName;
+			path += ".bin";
+
+			loadBlockDataFromFile(gameData.copyStructure.blockData,
+				gameData.copyStructure.wallData, gameData.copyStructure.w,
+				gameData.copyStructure.h, path.c_str());
 		}
 
 		for (int i = 1; i < Block::BLOCKS_COUNT; i++)

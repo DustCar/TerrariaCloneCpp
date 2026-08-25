@@ -1,7 +1,7 @@
 #include "saveMap.h"
 #include <asserts.h>
 
-bool saveBlockDataToFile(std::vector<Block> blocks, int width, int height, const char* filename)
+bool saveBlockDataToFile(std::vector<Block> blocks, std::vector<Block> walls, int width, int height, const char* filename)
 {
 	// open output file stream in binary mode
 	std::ofstream f(filename, std::ios::binary);
@@ -10,10 +10,16 @@ bool saveBlockDataToFile(std::vector<Block> blocks, int width, int height, const
 	if (!f.is_open()) { return false; }
 
 	// assert and check blocks size
+	permaAssertDevelopment(walls.size() == width * height);
+	permaAssertDevelopment(walls.size() != 0);
+	if (walls.size() != width * height) { return false; }
+	if (walls.size() == 0) { return false; }
+
 	permaAssertDevelopment(blocks.size() == width * height);
 	permaAssertDevelopment(blocks.size() != 0);
 	if (blocks.size() != width * height) { return false; }
 	if (blocks.size() == 0) { return false; }
+	
 
 	// write w and h to file
 	if (!f.write((const char*)&width, sizeof(width)) || !f.write((const char*)&height, sizeof(height)))
@@ -22,6 +28,10 @@ bool saveBlockDataToFile(std::vector<Block> blocks, int width, int height, const
 	}
 
 	// write blocks data to file
+	if (!f.write((const char*)walls.data(), sizeof(Block) * walls.size()))
+	{
+		return false;
+	}
 	if (!f.write((const char*)blocks.data(), sizeof(Block) * blocks.size()))
 	{
 		return false;
@@ -32,9 +42,10 @@ bool saveBlockDataToFile(std::vector<Block> blocks, int width, int height, const
 }
 
 // returns a vector of blocks and dimensions
-bool loadBlockDataFromFile(std::vector<Block>& blocks, int& width, int& height, const char* filename)
+bool loadBlockDataFromFile(std::vector<Block>& blocks, std::vector<Block>& walls, int& width, int& height, const char* filename)
 {
 	// clear data to start clean
+	walls.clear();
 	blocks.clear();
 	width = 0;
 	height = 0;
@@ -59,14 +70,18 @@ bool loadBlockDataFromFile(std::vector<Block>& blocks, int& width, int& height, 
 	if (height > 10000) { f.close(); return false; }
 
 	// read block data
+	size_t wallCount = width * height;
+	walls.resize(wallCount);
 	size_t blockCount = width * height;
 	blocks.resize(blockCount);
 
+	f.read((char*)walls.data(), sizeof(Block) * wallCount);
 	f.read((char*)blocks.data(), sizeof(Block) * blockCount);
 
 	// if file can't be read again, then clear data and return false
 	if (!f)
 	{
+		walls.clear();
 		blocks.clear();
 		width = 0;
 		height = 0;
@@ -74,6 +89,10 @@ bool loadBlockDataFromFile(std::vector<Block>& blocks, int& width, int& height, 
 	}
 
 	// remove any invalid blocks if any
+	for (int i = 0; i < walls.size(); i++)
+	{
+		walls[i].sanitize();
+	}
 	for (int i = 0; i < blocks.size(); i++)
 	{
 		blocks[i].sanitize();
