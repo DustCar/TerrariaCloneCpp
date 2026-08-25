@@ -1,7 +1,33 @@
 #include "saveMap.h"
 #include <asserts.h>
 
-bool saveBlockDataToFile(std::vector<Block> blocks, std::vector<Block> walls, int width, int height, const char* filename)
+// keep a copy of a version of the block structure to keep track of different saves
+struct BlockSaveRepresentation1
+{
+	std::uint16_t type = 0;
+	std::uint8_t variant = 0;
+
+	Block toBlock()
+	{
+		Block b;
+		b.type = type;
+		b.variant = variant;
+		return b;
+	}
+};
+
+// converter to transform the block to a specific save version (new or old)
+BlockSaveRepresentation1 toBlockSaveRepresentation(Block b)
+{
+	BlockSaveRepresentation1 saveRep;
+	saveRep.type = b.type;
+	saveRep.variant = b.variant;
+	return saveRep;
+}
+
+const int VERSION = 1;
+
+bool saveBlockDataToFile(const std::vector<Block>& blocks, const std::vector<Block>& walls, int width, int height, const char* filename)
 {
 	// open output file stream in binary mode
 	std::ofstream f(filename, std::ios::binary);
@@ -20,21 +46,28 @@ bool saveBlockDataToFile(std::vector<Block> blocks, std::vector<Block> walls, in
 	if (blocks.size() != width * height) { return false; }
 	if (blocks.size() == 0) { return false; }
 	
-
+	// write the version number first to distinguish save system versions
+	f.write(reinterpret_cast<const char*>(&VERSION), sizeof(VERSION));
 	// write w and h to file
-	if (!f.write((const char*)&width, sizeof(width)) || !f.write((const char*)&height, sizeof(height)))
+	if (!f.write(reinterpret_cast<const char*>(&width), sizeof(width)) || !f.write(reinterpret_cast<const char*>(&height), sizeof(height)))
 	{
 		return false;
 	}
 
 	// write blocks data to file
-	if (!f.write((const char*)walls.data(), sizeof(Block) * walls.size()))
+	for (int i = 0; i < blocks.size(); i++)
 	{
-		return false;
-	}
-	if (!f.write((const char*)blocks.data(), sizeof(Block) * blocks.size()))
-	{
-		return false;
+		auto w = toBlockSaveRepresentation(walls[i]);
+		auto b = toBlockSaveRepresentation(blocks[i]);
+
+		if (!f.write(reinterpret_cast<const char*>(&w), sizeof(w)))
+		{
+			return false;
+		}
+		if (!f.write(reinterpret_cast<const char*>(&b), sizeof(b)))
+		{
+			return false;
+		}
 	}
 
 	f.close();
@@ -54,10 +87,13 @@ bool loadBlockDataFromFile(std::vector<Block>& blocks, std::vector<Block>& walls
 	std::ifstream f(filename, std::ios::binary);
 
 	if (!f.is_open()) { return false; }
+	
+	int readVersion = 0;
 
 	// read dimensions
-	f.read((char*)&width, sizeof(width));
-	f.read((char*)&height, sizeof(height));
+	f.read(reinterpret_cast<char*>(&readVersion), sizeof(readVersion));
+	f.read(reinterpret_cast<char*>(&width), sizeof(width));
+	f.read(reinterpret_cast<char*>(&height), sizeof(height));
 
 	// check if file can't be read or if either dimension is 0 or smaller
 	if (!f || width <= 0 || height <= 0)
@@ -70,22 +106,47 @@ bool loadBlockDataFromFile(std::vector<Block>& blocks, std::vector<Block>& walls
 	if (height > 10000) { f.close(); return false; }
 
 	// read block data
-	size_t wallCount = width * height;
-	walls.resize(wallCount);
-	size_t blockCount = width * height;
-	blocks.resize(blockCount);
-
-	f.read((char*)walls.data(), sizeof(Block) * wallCount);
-	f.read((char*)blocks.data(), sizeof(Block) * blockCount);
-
-	// if file can't be read again, then clear data and return false
-	if (!f)
+	// TODO: refactor to a switch statement where saving is different based on version
+	switch (readVersion)
 	{
-		walls.clear();
-		blocks.clear();
-		width = 0;
-		height = 0;
-		return false;
+		case 1:
+		{
+			size_t blockCount = width * height;
+			walls.resize(blockCount);
+			blocks.resize(blockCount);
+
+			for (int i = 0; i < blockCount; i++)
+			{
+				BlockSaveRepresentation1 readWall;
+				BlockSaveRepresentation1 readBlock;
+
+				f.read(reinterpret_cast<char*>(&readWall), sizeof(readWall));
+				f.read(reinterpret_cast<char*>(&readBlock), sizeof(readBlock));
+
+				// clear and return false if file can't be read
+				if (!f)
+				{
+					walls.clear();
+					blocks.clear();
+					width = 0;
+					height = 0;
+				}
+
+				// convert to current block version
+				walls[i] = readWall.toBlock();
+				blocks[i] = readBlock.toBlock();
+			}
+
+			break;
+		}
+			
+		default: // no available version selected
+		{
+			width = 0;
+			height = 0;
+			return false;
+			break;
+		}
 	}
 
 	// remove any invalid blocks if any
