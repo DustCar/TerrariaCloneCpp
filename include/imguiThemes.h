@@ -6,18 +6,18 @@
 *	of themes!
 * 
 */
-void SetupImGuiDarkStyle();
-void SetupImGuiForestGreenStyle();
-void SetupImGuiAmethystStyle();
-void SetupImGuiSapphireStyle();
-void SetupImGuiAmberYellowStyle();
-void SetupImGuiDraculaStyle();
-void SetupImGuiCatppuccinMochaStyle();
-void SetupImGuiGruvboxHardStyle();
-void SetupImGuiCrimsonVesuviusStyle();
-void SetupImGuiRoseQuartzStyle();
-void SetupImGuiCyberpunkStyle();
-void SetupImGuiPaperAndInkStyle();
+void setupImGuiDarkStyle();
+void setupImGuiForestGreenStyle();
+void setupImGuiAmethystStyle();
+void setupImGuiSapphireStyle();
+void setupImGuiAmberYellowStyle();
+void setupImGuiDraculaStyle();
+void setupImGuiCatppuccinMochaStyle();
+void setupImGuiGruvboxHardStyle();
+void setupImGuiCrimsonVesuviusStyle();
+void setupImGuiRoseQuartzStyle();
+void setupImGuiCyberpunkStyle();
+void setupImGuiPaperAndInkStyle();
 #pragma endregion
 
-void RenderTheme();
+void renderTheme();

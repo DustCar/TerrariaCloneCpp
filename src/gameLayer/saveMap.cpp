@@ -16,16 +16,33 @@ struct BlockSaveRepresentation1
 	}
 };
 
-// converter to transform the block to a specific save version (new or old)
-BlockSaveRepresentation1 toBlockSaveRepresentation(Block b)
+struct BlockSaveRepresentation2
 {
-	BlockSaveRepresentation1 saveRep;
+	std::uint16_t type = 0;
+	std::uint8_t variant = 0;
+	std::uint8_t durability = 1;
+
+	Block toBlock()
+	{
+		Block b;
+		b.type = type;
+		b.variant = variant;
+		b.durability = durability;
+		return b;
+	}
+};
+
+const int VERSION = 2;
+
+// converter to transform the block to a specific save version (new or old)
+BlockSaveRepresentation2 toBlockSaveRepresentation(Block b)
+{
+	BlockSaveRepresentation2 saveRep;
 	saveRep.type = b.type;
 	saveRep.variant = b.variant;
+	saveRep.durability = b.durability;
 	return saveRep;
 }
-
-const int VERSION = 1;
 
 bool saveBlockDataToFile(const std::vector<Block>& blocks, const std::vector<Block>& walls, int width, int height, const char* filename)
 {
@@ -78,10 +95,14 @@ bool saveBlockDataToFile(const std::vector<Block>& blocks, const std::vector<Blo
 bool loadBlockDataFromFile(std::vector<Block>& blocks, std::vector<Block>& walls, int& width, int& height, const char* filename)
 {
 	// clear data to start clean
-	walls.clear();
-	blocks.clear();
-	width = 0;
-	height = 0;
+	auto clearData = [&]()
+	{
+		walls.clear();
+		blocks.clear();
+		width = 0;
+		height = 0;
+	};
+	clearData();
 
 	// open input file stream
 	std::ifstream f(filename, std::ios::binary);
@@ -98,6 +119,7 @@ bool loadBlockDataFromFile(std::vector<Block>& blocks, std::vector<Block>& walls
 	// check if file can't be read or if either dimension is 0 or smaller
 	if (!f || width <= 0 || height <= 0)
 	{
+		clearData();
 		return false;
 	}
 
@@ -126,10 +148,37 @@ bool loadBlockDataFromFile(std::vector<Block>& blocks, std::vector<Block>& walls
 				// clear and return false if file can't be read
 				if (!f)
 				{
-					walls.clear();
-					blocks.clear();
-					width = 0;
-					height = 0;
+					clearData();
+					return false;
+				}
+
+				// convert to current block version
+				walls[i] = readWall.toBlock();
+				blocks[i] = readBlock.toBlock();
+			}
+
+			break;
+		}
+
+		case 2:
+		{
+			size_t blockCount = width * height;
+			walls.resize(blockCount);
+			blocks.resize(blockCount);
+
+			for (int i = 0; i < blockCount; i++)
+			{
+				BlockSaveRepresentation2 readWall;
+				BlockSaveRepresentation2 readBlock;
+
+				f.read(reinterpret_cast<char*>(&readWall), sizeof(readWall));
+				f.read(reinterpret_cast<char*>(&readBlock), sizeof(readBlock));
+
+				// clear and return false if file can't be read
+				if (!f)
+				{
+					clearData();
+					return false;
 				}
 
 				// convert to current block version
@@ -152,11 +201,11 @@ bool loadBlockDataFromFile(std::vector<Block>& blocks, std::vector<Block>& walls
 	// remove any invalid blocks if any
 	for (int i = 0; i < walls.size(); i++)
 	{
-		walls[i].sanitize();
+		walls[i].Sanitize();
 	}
 	for (int i = 0; i < blocks.size(); i++)
 	{
-		blocks[i].sanitize();
+		blocks[i].Sanitize();
 	}
 
 	f.close();

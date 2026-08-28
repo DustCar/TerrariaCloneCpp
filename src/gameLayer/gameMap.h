@@ -10,12 +10,12 @@ struct GameMap
 	std::vector<Block> mapData;
 	std::vector<Block> wallData;
 
-	void create(int width, int height);
+	void Create(int width, int height);
 
-	Block& getBlockUnsafe(int x, int y);
-	Block* getBlockSafe(int x, int y);
+	Block& GetBlockUnsafe(int x, int y);
+	Block* GetBlockSafe(int x, int y);
 
-	Block& getWallUnsafe(int x, int y);
-	Block* getWallSafe(int x, int y);
+	Block& GetWallUnsafe(int x, int y);
+	Block* GetWallSafe(int x, int y);
 };
 

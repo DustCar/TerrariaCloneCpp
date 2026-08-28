@@ -1,7 +1,7 @@
 #include "gameMap.h"
 #include <asserts.h>
 
-void GameMap::create(int width, int height)
+void GameMap::Create(int width, int height)
 {
 	// reset data
 	*this = {};
@@ -15,7 +15,7 @@ void GameMap::create(int width, int height)
 	for (auto& wall : wallData) { wall = {}; }
 }
 
-Block& GameMap::getBlockUnsafe(int x, int y)
+Block& GameMap::GetBlockUnsafe(int x, int y)
 {
 	permaAssertCommentDevelopment(mapData.size() == w * h, "Map data not initialized.");
 
@@ -25,7 +25,7 @@ Block& GameMap::getBlockUnsafe(int x, int y)
 
 }
 
-Block* GameMap::getBlockSafe(int x, int y)
+Block* GameMap::GetBlockSafe(int x, int y)
 {
 	permaAssertCommentDevelopment(mapData.size() == w * h, "Map data not initialized.");
 
@@ -34,7 +34,7 @@ Block* GameMap::getBlockSafe(int x, int y)
 	return &mapData[y * w + x];
 }
 
-Block& GameMap::getWallUnsafe(int x, int y)
+Block& GameMap::GetWallUnsafe(int x, int y)
 {
 	permaAssertCommentDevelopment(wallData.size() == w * h, "Wall data not initialized.");
 
@@ -43,7 +43,7 @@ Block& GameMap::getWallUnsafe(int x, int y)
 	return wallData[y * w + x];
 }
 
-Block* GameMap::getWallSafe(int x, int y)
+Block* GameMap::GetWallSafe(int x, int y)
 {
 	permaAssertCommentDevelopment(wallData.size() == w * h, "Wall data not initialized.");
 

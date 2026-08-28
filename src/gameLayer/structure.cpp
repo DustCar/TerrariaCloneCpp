@@ -1,7 +1,7 @@
 #include "structure.h"
 #include <asserts.h>
 
-void Structure::create(int width, int height)
+void Structure::Create(int width, int height)
 {
 	blockData.resize(width * height);
 	wallData.resize(width * height);
@@ -13,7 +13,7 @@ void Structure::create(int width, int height)
 	for (auto& wall : wallData) { wall = {}; }
 }
 
-Block& Structure::getBlockUnsafe(int x, int y)
+Block& Structure::GetBlockUnsafe(int x, int y)
 {
 	permaAssertCommentDevelopment(blockData.size() == w * h, "Block data not initialized.");
 
@@ -22,7 +22,7 @@ Block& Structure::getBlockUnsafe(int x, int y)
 	return blockData[y * w + x];
 }
 
-Block* Structure::getBlockSafe(int x, int y)
+Block* Structure::GetBlockSafe(int x, int y)
 {
 	permaAssertCommentDevelopment(blockData.size() == w * h, "Block data not initialized.");
 
@@ -31,7 +31,7 @@ Block* Structure::getBlockSafe(int x, int y)
 	return &blockData[y * w + x];
 }
 
-Block& Structure::getWallUnsafe(int x, int y)
+Block& Structure::GetWallUnsafe(int x, int y)
 {
 	permaAssertCommentDevelopment(wallData.size() == w * h, "Wall data not initialized.");
 
@@ -40,7 +40,7 @@ Block& Structure::getWallUnsafe(int x, int y)
 	return wallData[y * w + x];
 }
 
-Block* Structure::getWallSafe(int x, int y)
+Block* Structure::GetWallSafe(int x, int y)
 {
 	permaAssertCommentDevelopment(wallData.size() == w * h, "Wall data not initialized.");
 
@@ -50,7 +50,7 @@ Block* Structure::getWallSafe(int x, int y)
 }
 
 // copy structure from map data
-void Structure::copyFromMap(GameMap& map, Vector2 start, Vector2 end)
+void Structure::CopyFromMap(GameMap& map, Vector2 start, Vector2 end)
 {
 	// multiple checks to constrain start and end coords
 	if (start.x > map.w) { start.x = map.w - 1; }
@@ -76,35 +76,35 @@ void Structure::copyFromMap(GameMap& map, Vector2 start, Vector2 end)
 	if (size.y > map.h) { return; }
 
 	// initialize the dimensions and arrays
-	create(size.x, size.y);
+	Create(size.x, size.y);
 
 	for (int y = 0; y < size.y; y++)
 	{
 		for (int x = 0; x < size.x; x++)
 		{
-			getWallUnsafe(x, y) = map.getWallUnsafe(x + start.x, y + start.y);
-			getBlockUnsafe(x, y) = map.getBlockUnsafe(x + start.x, y + start.y);
+			GetWallUnsafe(x, y) = map.GetWallUnsafe(x + start.x, y + start.y);
+			GetBlockUnsafe(x, y) = map.GetBlockUnsafe(x + start.x, y + start.y);
 		}
 	}
 }
 
 // paste structure into map data
-void Structure::pasteIntoMap(GameMap& map, Vector2 start)
+void Structure::PasteIntoMap(GameMap& map, Vector2 start)
 {
 	for (int y = 0; y < h; y++)
 	{
 		for (int x = 0; x < w; x++)
 		{
-			auto w = map.getWallSafe(x + start.x, y + start.y);
+			auto w = map.GetWallSafe(x + start.x, y + start.y);
 			if (w)
 			{
-				*w = getWallUnsafe(x, y);
+				*w = GetWallUnsafe(x, y);
 			}
 
-			auto b = map.getBlockSafe(x + start.x, y + start.y);
+			auto b = map.GetBlockSafe(x + start.x, y + start.y);
 			if (b)
 			{
-				*b = getBlockUnsafe(x, y);
+				*b = GetBlockUnsafe(x, y);
 			}
 		}
 	}

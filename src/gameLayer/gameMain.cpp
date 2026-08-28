@@ -13,10 +13,10 @@
 #include <structure.h>
 #include <saveMap.h>
 
-void ProcessMouseInput(int blockX, int blockY);
-void DrawImGui(float& cameraZoom, float& cameraSpeed);
-void DrawNoiseSettings(WorldParameters::NoiseParameters& noiseParams, const std::string& noiseLabel, bool bHasNoisePower = true);
-void CreateSelectableComboList(const char* label, const char** options, int opCount, int* currentIndex);
+void processMouseInput(int blockX, int blockY);
+void drawImGui(float& cameraZoom, float& cameraSpeed);
+void drawNoiseSettings(WorldParameters::NoiseParameters& noiseParams, const std::string& noiseLabel, bool bHasNoisePower = true);
+void createSelectableComboList(const char* label, const char** options, int opCount, int* currentIndex);
 
 bool operator==(const Vector2& a, const Vector2& b)
 {
@@ -104,7 +104,7 @@ bool updateGame()
 		if (IsKeyPressed(KEY_TWO)) { gameData.selectionEnd = Vector2{ (float)blockX, (float)blockY }; }
 		if (IsKeyPressed(KEY_THREE))
 		{
-			gameData.copyStructure.pasteIntoMap(gameData.gameMap, Vector2{ (float)blockX, (float)blockY });
+			gameData.copyStructure.PasteIntoMap(gameData.gameMap, Vector2{ (float)blockX, (float)blockY });
 		}
 
 		// on first selection set other selection also. avoids start defaulting to (0,0)
@@ -134,7 +134,7 @@ bool updateGame()
 
 	if (!io.WantCaptureMouse)
 	{
-		ProcessMouseInput(blockX, blockY);
+		processMouseInput(blockX, blockY);
 	}
 /* mouse controls end */
 
@@ -166,7 +166,7 @@ bool updateGame()
 		{
 			
 			// walls; drawn first so blocks go in front
-			auto& w = gameData.gameMap.getWallUnsafe(x, y);
+			auto& w = gameData.gameMap.GetWallUnsafe(x, y);
 
 			if (w.type != Block::air)
 			{
@@ -181,17 +181,17 @@ bool updateGame()
 			}
 
 			// blocks
-			auto& b = gameData.gameMap.getBlockUnsafe(x, y);
+			auto& b = gameData.gameMap.GetBlockUnsafe(x, y);
 
 			if (b.type != Block::air)
 			{
 				// draw wood log situationally
 				if (b.type == Block::woodLog)
 				{
-					auto bUp = gameData.gameMap.getBlockSafe(x, y - 1);
-					auto bDown = gameData.gameMap.getBlockSafe(x, y + 1);
-					auto bRight = gameData.gameMap.getBlockSafe(x + 1, y);
-					auto bLeft = gameData.gameMap.getBlockSafe(x - 1, y);
+					auto bUp = gameData.gameMap.GetBlockSafe(x, y - 1);
+					auto bDown = gameData.gameMap.GetBlockSafe(x, y + 1);
+					auto bRight = gameData.gameMap.GetBlockSafe(x + 1, y);
+					auto bLeft = gameData.gameMap.GetBlockSafe(x - 1, y);
 
 					int treeType = 0;
 					if (bDown->type == Block::woodLog || bDown->type == Block::leaves)
@@ -297,7 +297,7 @@ bool updateGame()
 #if PRODUCTION_BUILD == 0
 	if (bShowImgui)
 	{
-		DrawImGui(gameData.camera.zoom, CAMERA_SPEED);
+		drawImGui(gameData.camera.zoom, CAMERA_SPEED);
 	}
 #endif
 /* simple imgui end */
@@ -312,7 +312,7 @@ void closeGame()
 
 }
 
-void ProcessMouseInput(int blockX, int blockY)
+void processMouseInput(int blockX, int blockY)
 {
 	
 
@@ -322,7 +322,7 @@ void ProcessMouseInput(int blockX, int blockY)
 	// break block
 	if (IsMouseButtonDown(MOUSE_LEFT_BUTTON) && !IsMouseButtonDown(MOUSE_RIGHT_BUTTON))
 	{
-		auto b = gameData.gameMap.getBlockSafe(blockX, blockY);
+		auto b = gameData.gameMap.GetBlockSafe(blockX, blockY);
 
 		if (b && b->type != Block::air)
 		{
@@ -331,7 +331,7 @@ void ProcessMouseInput(int blockX, int blockY)
 		}
 		else
 		{
-			auto w = gameData.gameMap.getWallSafe(blockX, blockY);
+			auto w = gameData.gameMap.GetWallSafe(blockX, blockY);
 			if (w && !bDestroyingBlocks)
 			{
 				*w = {};
@@ -350,13 +350,13 @@ void ProcessMouseInput(int blockX, int blockY)
 	if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON) && !IsMouseButtonDown(MOUSE_LEFT_BUTTON))
 	{
 		// check block on cursor
-		auto block = gameData.gameMap.getBlockSafe(blockX, blockY);
+		auto block = gameData.gameMap.GetBlockSafe(blockX, blockY);
 
 		// check adjacent blocks
-		auto bUp = gameData.gameMap.getBlockSafe(blockX, blockY - 1);
-		auto bDown = gameData.gameMap.getBlockSafe(blockX, blockY + 1);
-		auto bRight = gameData.gameMap.getBlockSafe(blockX + 1, blockY);
-		auto bLeft = gameData.gameMap.getBlockSafe(blockX - 1, blockY);
+		auto bUp = gameData.gameMap.GetBlockSafe(blockX, blockY - 1);
+		auto bDown = gameData.gameMap.GetBlockSafe(blockX, blockY + 1);
+		auto bRight = gameData.gameMap.GetBlockSafe(blockX + 1, blockY);
+		auto bLeft = gameData.gameMap.GetBlockSafe(blockX - 1, blockY);
 
 		bool bBlocksAdjacent = (bUp && bUp->type != Block::air) || (bDown && bDown->type != Block::air) || (bRight && bRight->type != Block::air) || (bLeft && bLeft->type != Block::air);
 		// placement of standard blocks
@@ -378,7 +378,7 @@ void ProcessMouseInput(int blockX, int blockY)
 			// check to see if a block has not been placed and can attach to another block
 			if (block && block->type == Block::air && bBlocksAdjacent)
 			{
-				auto w = gameData.gameMap.getWallSafe(blockX, blockY);
+				auto w = gameData.gameMap.GetWallSafe(blockX, blockY);
 				if (w && w->type == Block::air)
 				{
 					w->type = gameData.selectedBlock;
@@ -397,7 +397,7 @@ void ProcessMouseInput(int blockX, int blockY)
 #endif
 }
 
-void DrawImGui(float& cameraZoom, float& cameraSpeed)
+void drawImGui(float& cameraZoom, float& cameraSpeed)
 {
 	//ImGui::ShowDemoWindow();
 
@@ -408,7 +408,7 @@ void DrawImGui(float& cameraZoom, float& cameraSpeed)
 	{
 		if (ImGui::Button("Copy") && gameData.selectionStart.has_value() && gameData.selectionEnd.has_value())
 		{
-			gameData.copyStructure.copyFromMap(gameData.gameMap, *gameData.selectionStart, *gameData.selectionEnd);
+			gameData.copyStructure.CopyFromMap(gameData.gameMap, *gameData.selectionStart, *gameData.selectionEnd);
 		}
 
 		ImGui::InputText("File Name", gameData.saveName, sizeof(gameData.saveName));
@@ -511,14 +511,14 @@ void DrawImGui(float& cameraZoom, float& cameraSpeed)
 		ImGui::NewLine();
 		// dirt noise generator
 		ImGui::SeparatorText("Dirt Noise Generator Settings");
-		DrawNoiseSettings(worldParams.dirtParams, "dirt");
+		drawNoiseSettings(worldParams.dirtParams, "dirt");
 
 		// cave noise generator
 		ImGui::SeparatorText("Cave Noise Generator Settings");
-		DrawNoiseSettings(worldParams.caveParams, "cave", false);
+		drawNoiseSettings(worldParams.caveParams, "cave", false);
 		// cave noise 2 generator
 		ImGui::SeparatorText("Cave Noise 2 Generator Settings");
-		DrawNoiseSettings(worldParams.cave2Params, "cave2", false);
+		drawNoiseSettings(worldParams.cave2Params, "cave2", false);
 
 		if (ImGui::Button("Re-generate##1"))
 		{
@@ -532,10 +532,10 @@ void DrawImGui(float& cameraZoom, float& cameraSpeed)
 
 		// cave noise 3 generator
 		ImGui::SeparatorText("Cave Noise 3 Generator Settings");
-		DrawNoiseSettings(worldParams.cave3Params, "cave3", false);
+		drawNoiseSettings(worldParams.cave3Params, "cave3", false);
 		// cave noise blend generator
 		ImGui::SeparatorText("Cave Noise Blend Generator Settings");
-		DrawNoiseSettings(worldParams.caveBlendParams, "caveBlend", false);
+		drawNoiseSettings(worldParams.caveBlendParams, "caveBlend", false);
 
 		ImGui::EndDisabled();
 
@@ -553,7 +553,7 @@ void DrawImGui(float& cameraZoom, float& cameraSpeed)
 	ImGui::End();
 }
 
-void DrawNoiseSettings(WorldParameters::NoiseParameters& noiseParams, const std::string& noiseLabel, bool bHasNoisePower)
+void drawNoiseSettings(WorldParameters::NoiseParameters& noiseParams, const std::string& noiseLabel, bool bHasNoisePower)
 {
 	const char* noiseTypes[] = {"OpenSimplex2", "OpenSimplex2S", "Cellular", "Perlin", "ValueCubic", "Value"};
 	const char* fractalTypes[] = { "None", "FBm", "Rigid", "PingPong" };
@@ -576,7 +576,7 @@ void DrawNoiseSettings(WorldParameters::NoiseParameters& noiseParams, const std:
 	ImGui::PushItemWidth(125.f);
 	// noise type
 	ImGui::AlignTextToFramePadding(); ImGui::Text("Noise Type:"); ImGui::SameLine();
-	CreateSelectableComboList(typeLabel.c_str(), noiseTypes, IM_ARRAYSIZE(noiseTypes), &noiseParams.noiseType);
+	createSelectableComboList(typeLabel.c_str(), noiseTypes, IM_ARRAYSIZE(noiseTypes), &noiseParams.noiseType);
 
 	// frequency
 	ImGui::AlignTextToFramePadding(); ImGui::Text("Frequency:"); ImGui::SameLine();
@@ -594,7 +594,7 @@ void DrawNoiseSettings(WorldParameters::NoiseParameters& noiseParams, const std:
 
 	// fractal type
 	ImGui::AlignTextToFramePadding(); ImGui::Text("Fractal Type:"); ImGui::SameLine();
-	CreateSelectableComboList(fractalLabel.c_str(), fractalTypes, IM_ARRAYSIZE(fractalTypes), &noiseParams.fractalType);
+	createSelectableComboList(fractalLabel.c_str(), fractalTypes, IM_ARRAYSIZE(fractalTypes), &noiseParams.fractalType);
 
 	// fractal octaves
 	ImGui::AlignTextToFramePadding(); ImGui::Text("Octaves:"); ImGui::SameLine();
@@ -616,11 +616,11 @@ void DrawNoiseSettings(WorldParameters::NoiseParameters& noiseParams, const std:
 
 	// cell distance function
 	ImGui::AlignTextToFramePadding(); ImGui::Text("Distance Function:"); ImGui::SameLine();
-	CreateSelectableComboList(cellDistLabel.c_str(), cellDistance, IM_ARRAYSIZE(cellDistance), &noiseParams.cellDistFunc);
+	createSelectableComboList(cellDistLabel.c_str(), cellDistance, IM_ARRAYSIZE(cellDistance), &noiseParams.cellDistFunc);
 
 	// cell return type
 	ImGui::AlignTextToFramePadding(); ImGui::Text("Return Type:"); ImGui::SameLine();
-	CreateSelectableComboList(cellReturnLabel.c_str(), cellReturn, IM_ARRAYSIZE(cellReturn), &noiseParams.cellReturnType);
+	createSelectableComboList(cellReturnLabel.c_str(), cellReturn, IM_ARRAYSIZE(cellReturn), &noiseParams.cellReturnType);
 
 	// cell jitter
 	ImGui::AlignTextToFramePadding(); ImGui::Text("Jitter:"); ImGui::SameLine();
@@ -634,7 +634,7 @@ void DrawNoiseSettings(WorldParameters::NoiseParameters& noiseParams, const std:
 	ImGui::NewLine();
 }
 
-void CreateSelectableComboList(const char* label, const char** options, int opCount, int* currentIndex)
+void createSelectableComboList(const char* label, const char** options, int opCount, int* currentIndex)
 {
 	const char* preview = options[*currentIndex];
 	if (ImGui::BeginCombo(label, preview))

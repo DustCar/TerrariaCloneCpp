@@ -21,7 +21,7 @@ enum class ETheme : std::uint8_t
 };
 
 # pragma region TheAncientOwl themes
-void SetupImGuiDarkStyle()
+void setupImGuiDarkStyle()
 {
     ImGui::StyleColorsDark();
 
@@ -51,7 +51,7 @@ void SetupImGuiDarkStyle()
     style.TabRounding = 3.0f;
 }
 
-void SetupImGuiForestGreenStyle()
+void setupImGuiForestGreenStyle()
 {
     ImGuiStyle& style = ImGui::GetStyle();
     ImVec4* colors = style.Colors;
@@ -172,7 +172,7 @@ void SetupImGuiForestGreenStyle()
 #endif
 }
 
-void SetupImGuiAmethystStyle()
+void setupImGuiAmethystStyle()
 {
     ImGuiStyle& style = ImGui::GetStyle();
     ImVec4* colors = style.Colors;
@@ -269,7 +269,7 @@ void SetupImGuiAmethystStyle()
 #endif
 }
 
-void SetupImGuiSapphireStyle()
+void setupImGuiSapphireStyle()
 {
     ImGuiStyle& style = ImGui::GetStyle();
     ImVec4* colors = style.Colors;
@@ -361,7 +361,7 @@ void SetupImGuiSapphireStyle()
 #endif
 }
 
-void SetupImGuiAmberYellowStyle()
+void setupImGuiAmberYellowStyle()
 {
     ImGuiStyle& style = ImGui::GetStyle();
     ImVec4* colors = style.Colors;
@@ -455,7 +455,7 @@ void SetupImGuiAmberYellowStyle()
 #endif
 }
 
-void SetupImGuiDraculaStyle()
+void setupImGuiDraculaStyle()
 {
     ImGuiStyle& style = ImGui::GetStyle();
     ImVec4* colors = style.Colors;
@@ -550,7 +550,7 @@ void SetupImGuiDraculaStyle()
 #endif
 }
 
-void SetupImGuiCatppuccinMochaStyle()
+void setupImGuiCatppuccinMochaStyle()
 {
     ImGuiStyle& style = ImGui::GetStyle();
     ImVec4* colors = style.Colors;
@@ -640,7 +640,7 @@ void SetupImGuiCatppuccinMochaStyle()
 #endif
 }
 
-void SetupImGuiGruvboxHardStyle()
+void setupImGuiGruvboxHardStyle()
 {
     ImGuiStyle& style = ImGui::GetStyle();
     ImVec4* colors = style.Colors;
@@ -728,7 +728,7 @@ void SetupImGuiGruvboxHardStyle()
 #endif
 }
 
-void SetupImGuiCrimsonVesuviusStyle()
+void setupImGuiCrimsonVesuviusStyle()
 {
     ImGuiStyle& style = ImGui::GetStyle();
     ImVec4* colors = style.Colors;
@@ -812,7 +812,7 @@ void SetupImGuiCrimsonVesuviusStyle()
 #endif
 }
 
-void SetupImGuiRoseQuartzStyle()
+void setupImGuiRoseQuartzStyle()
 {
     ImGuiStyle& style = ImGui::GetStyle();
     ImVec4* colors = style.Colors;
@@ -896,7 +896,7 @@ void SetupImGuiRoseQuartzStyle()
 #endif
 }
 
-void SetupImGuiCyberpunkStyle()
+void setupImGuiCyberpunkStyle()
 {
     ImGuiStyle& style = ImGui::GetStyle();
     ImVec4* colors = style.Colors;
@@ -982,7 +982,7 @@ void SetupImGuiCyberpunkStyle()
 #endif
 }
 
-void SetupImGuiPaperAndInkStyle()
+void setupImGuiPaperAndInkStyle()
 {
     ImGuiStyle& style = ImGui::GetStyle();
     ImVec4* colors = style.Colors;
@@ -1084,7 +1084,7 @@ void SetupImGuiPaperAndInkStyle()
 }
 #pragma endregion
 
-void RenderTheme()
+void renderTheme()
 {
     static auto currentTheme = ETheme::Dark;
     
@@ -1112,40 +1112,40 @@ void RenderTheme()
         switch (currentTheme)
         {
         case ETheme::ForestGreen:
-            SetupImGuiForestGreenStyle();
+            setupImGuiForestGreenStyle();
             break;
         case ETheme::Amethyst:
-            SetupImGuiAmethystStyle();
+            setupImGuiAmethystStyle();
             break;
         case ETheme::Sapphire:
-            SetupImGuiSapphireStyle();
+            setupImGuiSapphireStyle();
             break;
         case ETheme::AmberYellow:
-            SetupImGuiAmberYellowStyle();
+            setupImGuiAmberYellowStyle();
             break;
         case ETheme::Dracula:
-            SetupImGuiDraculaStyle();
+            setupImGuiDraculaStyle();
             break;
         case ETheme::CatppuccinMocha:
-            SetupImGuiCatppuccinMochaStyle();
+            setupImGuiCatppuccinMochaStyle();
             break;
         case ETheme::GruvboxHard:
-            SetupImGuiGruvboxHardStyle();
+            setupImGuiGruvboxHardStyle();
             break;
         case ETheme::CrimsonVesuvius:
-            SetupImGuiCrimsonVesuviusStyle();
+            setupImGuiCrimsonVesuviusStyle();
             break;
         case ETheme::RoseQuartz:
-            SetupImGuiRoseQuartzStyle();
+            setupImGuiRoseQuartzStyle();
             break;
         case ETheme::Cyberpunk:
-            SetupImGuiCyberpunkStyle();
+            setupImGuiCyberpunkStyle();
             break;
         case ETheme::PaperAndInk:
-            SetupImGuiPaperAndInkStyle();
+            setupImGuiPaperAndInkStyle();
             break;
         default:
-            SetupImGuiDarkStyle();
+            setupImGuiDarkStyle();
             break;
         }
     }

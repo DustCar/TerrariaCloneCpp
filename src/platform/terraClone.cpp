@@ -31,7 +31,7 @@ int main()
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;	// Enable Keyboard controls
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;	// Enable Gamepad controls
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-	SetupImGuiAmethystStyle();
+	setupImGuiAmethystStyle();
 /* imgui setup end */
 
 	if (!initGame())

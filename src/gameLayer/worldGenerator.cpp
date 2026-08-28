@@ -11,7 +11,7 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 	int w = params.width;
 	int h = params.height;
 
-	gameMap.create(w, h);
+	gameMap.Create(w, h);
 
 	std::ranlux24_base rng(seed++);
 
@@ -46,7 +46,7 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 	}
 
 	// helper to fill noise vectors
-	auto FillNoiseDataFull = [&](std::vector<float>& noise, const FastNoiseLite& noiseGenerator)
+	auto fillNoiseDataFull = [&](std::vector<float>& noise, const FastNoiseLite& noiseGenerator)
 	{
 		for (int i = 0; i < w; i++)
 		{
@@ -55,13 +55,13 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 		}
 	};
 
-	FillNoiseDataFull(caveNoise, caveNoiseGenerator);
-	FillNoiseDataFull(caveNoise2, caveNoiseGenerator2);
-	FillNoiseDataFull(caveNoise3, caveNoiseGenerator3);
-	FillNoiseDataFull(caveNoiseBlend, caveNoiseGeneratorBlend);
+	fillNoiseDataFull(caveNoise, caveNoiseGenerator);
+	fillNoiseDataFull(caveNoise2, caveNoiseGenerator2);
+	fillNoiseDataFull(caveNoise3, caveNoiseGenerator3);
+	fillNoiseDataFull(caveNoiseBlend, caveNoiseGeneratorBlend);
 
 	// helper to get cave noise
-	auto GetCaveNoise = [&](const std::vector<float>& noise, int x, int y)
+	auto getCaveNoise = [&](const std::vector<float>& noise, int x, int y)
 	{
 		return noise[y * w + x];
 	};
@@ -198,11 +198,11 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 				}
 			}
 
-			float screenBlend = 1.f - (1.f - GetCaveNoise(caveNoise, x, y)) * (1.f - GetCaveNoise(caveNoise2, x, y));
+			float screenBlend = 1.f - (1.f - getCaveNoise(caveNoise, x, y)) * (1.f - getCaveNoise(caveNoise2, x, y));
 			if (params.bBlendThirdCaveNoise)
 			{
 
-				float blendResult = lerp(screenBlend, GetCaveNoise(caveNoise3, x, y), GetCaveNoise(caveNoiseBlend, x, y));
+				float blendResult = lerp(screenBlend, getCaveNoise(caveNoise3, x, y), getCaveNoise(caveNoiseBlend, x, y));
 				if (blendResult < 0.5f && blendResult > 0.35f && y > stoneHeight + 2)
 				{
 					b.type = Block::air;
@@ -217,7 +217,7 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 			}
 			
 
-			gameMap.getBlockUnsafe(x, y) = b;
+			gameMap.GetBlockUnsafe(x, y) = b;
 		}
 	}
 
@@ -267,7 +267,7 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 						float dx = startX + ox;
 						float dy = startY + oy;
 
-						auto b = gameMap.getBlockSafe(dx, dy);
+						auto b = gameMap.GetBlockSafe(dx, dy);
 						if (b)
 						{
 							b->type = Block::air;
