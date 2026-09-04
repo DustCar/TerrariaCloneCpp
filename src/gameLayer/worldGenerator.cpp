@@ -66,13 +66,40 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 		return noise[y * w + x];
 	};
 
-	// dirt will be affected by stoneHeight so a -value allows stone to be at most 5 blocks above dirt
-	int dirtOffsetStart = -7;
-	int dirtOffsetEnd = 43;
-	// end - start = 57 layers of dirt
-
 	
 	/* Manual World Generation data */
+	// dirt layer only cares about normal blocks, no need to look at wall blocks
+	auto generateDirtLayer = [&]()
+	{
+		int dirtBaseMin = 55;
+		int dirtBaseMax = 85;
+
+		for (int x = 0; x < w; x++)
+		{
+			int dirtHeight = lerp(dirtBaseMin, dirtBaseMax, dirtNoise[x]);
+
+			for (int y = 0; y < h; y++)
+			{
+				Block b = gameMap.GetBlockUnsafe(x, y);
+
+				b.variant = getRandomInt(rng, 0, 3);
+
+				if (y == dirtHeight)
+				{
+					b.type = Block::grassBlock;
+				}
+				if (y > dirtHeight)
+				{
+					b.type = Block::dirt;
+				}
+				
+				gameMap.GetBlockUnsafe(x, y) = b;
+			}
+		}
+
+	};
+	
+	generateDirtLayer();
 
 	// desert biome generation
 	const int desertEndPercent = (int)(w * 0.7f);
@@ -134,44 +161,27 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 		}
 
 		// Lerp heights based on noise
-		int dirtHeight = lerp(dirtOffsetStart, dirtOffsetEnd, dirtNoise[x]);
-		dirtHeight = stoneHeight - dirtHeight;
 
 		// cap ranges; 
 		if (stoneHeight < 75) { stoneHeight = 75; }
 		if (stoneHeight > 120) { stoneHeight = 120; }
 
-		int dirtType = Block::dirt;
-		int grassType = Block::grassBlock;
-		int stoneType = Block::stone;
-
-		if (bInDesert)
-		{
-			dirtType = Block::sand;
-			grassType = Block::sand;
-			stoneType = Block::sandStone;
-		}
-
 		for (int y = 0; y < h; y++)
 		{
-			Block b;
+			auto b = gameMap.GetBlockUnsafe(x,y);
 
 			b.variant = getRandomInt(rng, 0, 3);
-
-			if (y > dirtHeight)
-			{
-				b.type = dirtType;
-			}
-
-			if (y == dirtHeight)
-			{
-				b.type = grassType;
-			}
 			
 			if (y >= stoneHeight)
 			{
-				b.type = stoneType;
-
+				if (bInDesert)
+				{
+					b.type = Block::sandStone;
+				}
+				else
+				{
+					b.type = Block::stone;
+				}
 			}
 
 			if (bInDesert)

@@ -185,7 +185,7 @@ bool updateGame()
 
 			if (b.type != Block::air)
 			{
-				// draw wood log situationally
+				// draw wood log situationally; TODO: could be refactored into a method
 				if (b.type == Block::woodLog)
 				{
 					auto bUp = gameData.gameMap.GetBlockSafe(x, y - 1);
