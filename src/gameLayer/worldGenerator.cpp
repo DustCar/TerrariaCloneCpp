@@ -76,6 +76,7 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 
 		for (int x = 0; x < w; x++)
 		{
+			// lerp height from noise
 			int dirtHeight = lerp(dirtBaseMin, dirtBaseMax, dirtNoise[x]);
 
 			for (int y = 0; y < h; y++)
@@ -98,8 +99,74 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 		}
 
 	};
+
+	int stoneHeight = 90;
+
+	// Stone layer generation, same thing, no wall blocks
+	auto generateStoneLayer = [&]()
+	{
+		std::cout << "Stone generated\n";
+
+		// counters
+		int stoneDirectionTimer = getRandomInt(rng, 10, 30);
+
+		// block "slope" direction
+		int stoneDir = getRandomInt(rng, -1, 1);
+
+		for (int x = 0; x < w; x++)
+		{
+			// Stone Blocks 
+			stoneDirectionTimer--;
+			if (stoneDirectionTimer <= 0)
+			{
+				stoneDirectionTimer = getRandomInt(rng, 10, 30);
+				stoneDir = getRandomInt(rng, -1, 1);
+			}
+
+			if (stoneDir < 0)
+			{
+				for (int i = stoneDir; i < 0; i++)
+				{
+					if (getBoolChance(rng, 0.25f))
+					{
+						stoneHeight--;
+					}
+				}
+
+			}
+			else if (stoneDir > 0)
+			{
+				for (int i = stoneDir; i > 0; i--)
+				{
+					if (getBoolChance(rng, 0.25f))
+					{
+						stoneHeight++;
+					}
+				}
+			}
+
+			// cap ranges; 
+			if (stoneHeight < 75) { stoneHeight = 75; }
+			if (stoneHeight > 120) { stoneHeight = 120; }
+
+			for (int y = 0; y < h; y++)
+			{
+				Block b = gameMap.GetBlockUnsafe(x, y);
+
+				b.variant = getRandomInt(rng, 0, 3);
+
+				if (y >= stoneHeight)
+				{
+					b.type = Block::stone;
+				}
+
+				gameMap.GetBlockUnsafe(x, y) = b;
+			}
+		}
+	};
 	
 	generateDirtLayer();
+	generateStoneLayer();
 
 	// desert biome generation
 	const int desertEndPercent = (int)(w * 0.7f);
@@ -115,56 +182,12 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 	// size of desert half
 	int desertHalfWidth = (desertBiomeEnd - desertBiomeStart) * 0.5f;
 
-	// stone block range
-	int stoneHeight = 90;
-
-	// counters
-	int stoneDirectionTimer = getRandomInt(rng, 10, 30);
-
-	// block "slope" direction
-	int stoneDir = getRandomInt(rng, -1, 1);
-
-
 	for (int x = 0; x < w; x++)
 	{
 		bool bInDesert = (x >= desertBiomeStart && x <= desertBiomeEnd);
 
 		/* Manual World Generation */
-		// Stone Blocks 
-		stoneDirectionTimer--;
-		if (stoneDirectionTimer <= 0)
-		{
-			stoneDirectionTimer = getRandomInt(rng, 10, 30);
-			stoneDir = getRandomInt(rng, -1, 1);
-		}
-
-		if (stoneDir < 0)
-		{
-			for (int i = stoneDir; i < 0; i++)
-			{
-				if (getBoolChance(rng, 0.25f))
-				{
-					stoneHeight--;
-				}
-			}
-
-		}
-		else if (stoneDir > 0)
-		{
-			for (int i = stoneDir; i > 0; i--)
-			{
-				if (getBoolChance(rng, 0.25f))
-				{
-					stoneHeight++;
-				}
-			}
-		}
-
-		// Lerp heights based on noise
-
-		// cap ranges; 
-		if (stoneHeight < 75) { stoneHeight = 75; }
-		if (stoneHeight > 120) { stoneHeight = 120; }
+		
 
 		for (int y = 0; y < h; y++)
 		{
@@ -177,10 +200,6 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 				if (bInDesert)
 				{
 					b.type = Block::sandStone;
-				}
-				else
-				{
-					b.type = Block::stone;
 				}
 			}
 
@@ -208,6 +227,7 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 				}
 			}
 
+			// Cave generation block
 			float screenBlend = 1.f - (1.f - getCaveNoise(caveNoise, x, y)) * (1.f - getCaveNoise(caveNoise2, x, y));
 			if (params.bBlendThirdCaveNoise)
 			{
