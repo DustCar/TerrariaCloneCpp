@@ -46,24 +46,24 @@ struct WorldParameters
 	WorldParameters()
 	{
 		caveParams.noiseType = 1;			// noiseType: 1 == OpenSimplex2S
-		caveParams.frequency = 0.07f;
-		caveParams.fractalOctaves = 4;
+		caveParams.frequency = 0.05f;
+		caveParams.fractalOctaves = 2;
 		caveParams.fractalLacunarity = 2.f;
 		caveParams.fractalGain = 0.4f;
 
-		cave2Params.frequency = 0.06f;
-		cave2Params.fractalOctaves = 3;
+		cave2Params.frequency = 0.02f;
+		cave2Params.fractalOctaves = 1;
 		cave2Params.fractalLacunarity = 2.f;
 		cave2Params.fractalGain = 0.3f;
 
 		cave3Params.noiseType = 3;			// noiseType: 3 == Perlin
-		cave3Params.frequency = 0.015f;
+		cave3Params.frequency = 0.04f;
 		cave3Params.fractalOctaves = 4;
 		cave3Params.fractalLacunarity = 2.f;
 
-		caveBlendParams.noiseType = 1;
-		caveBlendParams.frequency = 0.1f;
-		caveBlendParams.fractalOctaves = 1;
+		caveBlendParams.noiseType = 3;
+		caveBlendParams.frequency = 0.012f;
+		caveBlendParams.fractalOctaves = 2;
 	}
 };
 

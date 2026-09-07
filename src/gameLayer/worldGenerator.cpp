@@ -100,12 +100,11 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 
 	};
 
-	int stoneHeight = 90;
 
 	// Stone layer generation, same thing, no wall blocks
 	auto generateStoneLayer = [&]()
 	{
-		std::cout << "Stone generated\n";
+		int stoneHeight = 90;
 
 		// counters
 		int stoneDirectionTimer = getRandomInt(rng, 10, 30);
@@ -164,92 +163,88 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 			}
 		}
 	};
+
+	// Desert biome layer generation
+	auto generateDesertBiome = [&]()
+	{
+		const int desertEndPercent = (int)(w * 0.7f);	// let's desert end stay relative to whatever width it has
+		int desertBiomeStart = getRandomInt(rng, 50, desertEndPercent - 50);
+
+		// used as min length and for extra length for desert end
+		int desertEndPaddingHalf = (int)((w - desertEndPercent + 50) * 0.5f);
+		int desertBiomeEnd = desertBiomeStart + desertEndPaddingHalf + getRandomInt(rng, 0, desertEndPaddingHalf);
+		if (desertBiomeEnd > w) { desertBiomeEnd = w; }
+
+		// actual mid point value on map
+		int desertBiomeMid = (desertBiomeStart + desertBiomeEnd) * 0.5f;
+		// size of desert half; used to measure against midpoint
+		int desertHalfWidth = (desertBiomeEnd - desertBiomeStart) * 0.5f;
+
+		// we already have start and end so no need to loop through all of w
+		for (int x = desertBiomeStart; x <= desertBiomeEnd; x++)
+		{
+			// TODO: figure out how to set threshold based on stone start.
+			
+			for (int y = 0; y < h; y++)
+			{
+				Block b = gameMap.GetBlockUnsafe(x, y);
+
+				b.variant = getRandomInt(rng, 0, 3);
+
+				if (b.type == Block::grassBlock || b.type == Block::dirt)
+				{
+					b.type = Block::sand;
+				}
+				if (b.type == Block::stone)
+				{
+					
+					b.type = Block::sandStone;
+				}
+				
+
+				gameMap.GetBlockUnsafe(x, y) = b;
+			}
+		}
+	};
+
+	// Cave layer generation
+	auto generateCaves = [&]()
+	{
+		for (int x = 0; x < w; x++)
+		{
+			for (int y = 0; y < h; y++)
+			{
+
+				Block b = gameMap.GetBlockUnsafe(x, y);
+
+				float screenBlend = 1.f - (1.f - getCaveNoise(caveNoise, x, y)) * (1.f - getCaveNoise(caveNoise2, x, y));
+				if (params.bBlendThirdCaveNoise)
+				{
+					float blendResult = lerp(screenBlend, getCaveNoise(caveNoise3, x, y), getCaveNoise(caveNoiseBlend, x, y));
+					if (blendResult < 0.57f && blendResult > 0.38f)
+					{
+						b.type = Block::air;
+					}
+				}
+				else
+				{
+					if (screenBlend < 0.55f && screenBlend > 0.35f)
+					{
+						b.type = Block::air;
+					}
+				}
+
+				gameMap.GetBlockUnsafe(x, y) = b;
+			}
+		}
+		
+	};
 	
 	generateDirtLayer();
 	generateStoneLayer();
 
-	// desert biome generation
-	const int desertEndPercent = (int)(w * 0.7f);
-	int desertBiomeStart = getRandomInt(rng, 50, desertEndPercent - 50);
-
-	// used as min length and for extra length for desert end
-	int desertEndPaddingHalf = (int)((w - desertEndPercent + 50) * 0.5f);
-	int desertBiomeEnd = desertBiomeStart + desertEndPaddingHalf + getRandomInt(rng, 0, desertEndPaddingHalf);
-	if (desertBiomeEnd > w) { desertBiomeEnd = w; }
-
-	// actual mid point value on map
-	int desertBiomeMid = (desertBiomeStart + desertBiomeEnd) * 0.5f;
-	// size of desert half
-	int desertHalfWidth = (desertBiomeEnd - desertBiomeStart) * 0.5f;
-
-	for (int x = 0; x < w; x++)
-	{
-		bool bInDesert = (x >= desertBiomeStart && x <= desertBiomeEnd);
-
-		/* Manual World Generation */
-		
-
-		for (int y = 0; y < h; y++)
-		{
-			auto b = gameMap.GetBlockUnsafe(x,y);
-
-			b.variant = getRandomInt(rng, 0, 3);
-			
-			if (y >= stoneHeight)
-			{
-				if (bInDesert)
-				{
-					b.type = Block::sandStone;
-				}
-			}
-
-			if (bInDesert)
-			{
-				// use the desert mid and width to create a triangle shape by using a desert threshold
-				int desertDistanceFromMid = std::abs(x - desertBiomeMid);
-				// 0 at the edge, 1 at the middle
-				float desertMidDistanceRatio = 1 - desertDistanceFromMid / (float)desertHalfWidth;
-
-				desertMidDistanceRatio = std::clamp(desertMidDistanceRatio, 0.f, 1.f);
-				// power to affect shape
-				desertMidDistanceRatio = powf(desertMidDistanceRatio, 1.15f);
-
-				// when regular stone starts
-				int desertStoneThreshold = stoneHeight + 5;
-				// how deep the shape goes
-				int desertStoneDepth = stoneHeight - 15;
-
-				int desertShapeY = desertStoneThreshold + desertMidDistanceRatio * desertStoneDepth;
-
-				if (y > desertShapeY)
-				{
-					b.type = Block::stone;
-				}
-			}
-
-			// Cave generation block
-			float screenBlend = 1.f - (1.f - getCaveNoise(caveNoise, x, y)) * (1.f - getCaveNoise(caveNoise2, x, y));
-			if (params.bBlendThirdCaveNoise)
-			{
-
-				float blendResult = lerp(screenBlend, getCaveNoise(caveNoise3, x, y), getCaveNoise(caveNoiseBlend, x, y));
-				if (blendResult < 0.5f && blendResult > 0.35f && y > stoneHeight + 2)
-				{
-					b.type = Block::air;
-				}
-			}
-			else
-			{
-				if (screenBlend < 0.5f && screenBlend > 0.35f && y > stoneHeight + 2)
-				{
-					b.type = Block::air;
-				}
-			}
-			
-
-			gameMap.GetBlockUnsafe(x, y) = b;
-		}
-	}
+	generateDesertBiome();
+	generateCaves();
 
 	auto SpawnWorm = [&](float startX, float startY, int wormMin, int wormMax, float maxRadius)
 	{
@@ -267,7 +262,7 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 			dirX = getRandomFloat(rng, -1.f, -0.8f);
 		}
 
-		if (startY < stoneHeight)
+		if (startY < 75)
 		{
 			dirY = getRandomFloat(rng, 0.8f, 1.f);
 		}
@@ -342,7 +337,7 @@ void GenerateWorld(GameMap& gameMap, const WorldParameters& params, int seed)
 	{
 		// separate the worms "uniformly" to avoid too much clumping
 		float segmentLength = w / (float)nWorms;
-		SpawnWorm(getRandomFloat(rng, segmentLength * i, segmentLength * (i + 1)), getRandomFloat(rng, stoneHeight, h - 15.f), 75, 200, 5.8f);
+		SpawnWorm(getRandomFloat(rng, segmentLength * i, segmentLength * (i + 1)), getRandomFloat(rng, 75, h - 15.f), 75, 200, 5.8f);
 	}
 }
 
